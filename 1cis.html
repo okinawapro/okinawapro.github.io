@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mega-Festival CIS Blueprint Workshop</title>
+    <link rel="stylesheet" href="1cisstyles.css">
+</head>
+
+<body class="">
+
+    <div class="container">
+
+        <header>
+            <h1>🎓 CIS Workshop: The Mega-Festival Blueprint</h1>
+            <p><strong>Objective:</strong> As Chief Operating Officers (COOs), you must map the critical components of
+                your festival to the five pillars of Computer Information Systems (Hardware, Software, Data, Process,
+                People). Drag each concept card into the correct pillar's drop zone.</p>
+            <hr>
+            <p class="academic-note">*(Professor's Note: This activity emphasizes that no single pillar can function in
+                isolation; failure in one area cascades through the others. Focus on the dependencies!)*</p>
+        </header>
+
+        <div class="card-area">
+
+            <!-- Source Card Area (The Cards to be sorted) -->
+            <div class="card-area" style="flex-basis: 100%;" id="source-card-area">
+                <h2>🗺️ Unallocated Concepts (The Components)</h2>
+                <!-- Cards will be inserted and shuffled here by JavaScript -->
+                <div class="card" id="card-fiber-optic" draggable="true" data-component="Hardware">Fiber Optic Cables
+                </div>
+                <div class="card" id="card-generators" draggable="true" data-component="Hardware">Generator Capacity &
+                    Power Grid</div>
+                <div class="card" id="card-staging" draggable="true" data-component="Hardware">Main Staging Structure &
+                    Soundboards</div>
+
+                <div class="card" id="card-scheduler-app" draggable="true" data-component="Software">Artist Scheduling
+                    App (Logic)</div>
+                <div class="card" id="card-ticketing-logic" draggable="true" data-component="Software">Ticketing
+                    Validation Algorithm</div>
+                <div class="card" id="card-crowd-flow-app" draggable="true" data-component="Software">Real-time Crowd
+                    Flow App</div>
+
+                <div class="card" id="card-attendance-data" draggable="true" data-component="Data">Daily Attendance
+                    Count & Capacity Logs</div>
+                <div class="card" id="card-billing-data" draggable="true" data-component="Data">Artist Billing &
+                    Contract Details</div>
+                <div class="card" id="card-density-data" draggable="true" data-component="Data">Real-time Crowd Density
+                    Map</div>
+
+                <div class="card" id="card-triage-process" draggable="true" data-component="Process">Emergency Medical
+                    Triage Checklist</div>
+                <div class="card" id="card-waste-route" draggable="true" data-component="Process">Waste
+                    Management/Recycling Route</div>
+                <div class="card" id="card-load-in-process" draggable="true" data-component="Process">Artist Load-in &
+                    Soundcheck Procedure</div>
+
+                <div class="card" id="card-security-staff" draggable="true" data-component="People">Security Personnel
+                </div>
+                <div class="card" id="card-tech-crew" draggable="true" data-component="People">Sound Technicians & Stage
+                    Crew</div>
+                <div class="card" id="card-volunteers" draggable="true" data-component="People">Volunteer Staff</div>
+            </div>
+
+            <!-- Drop Zones (The Bins) -->
+            <div class="drop-zone" id="hardware-bin" data-component="Hardware">
+                <h3>⚙️ Hardware (The Physical Infrastructure)</h3>
+                <p>What are the physical, tangible limits of the festival?</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+            <div class="drop-zone" id="software-bin" data-component="Software">
+                <h3>💻 Software (The Systemic Logic)</h3>
+                <p>What programs or rules manage the chaos?</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+            <div class="drop-zone" id="data-bin" data-component="Data">
+                <h3>📊 Data (The Information Flow)</h3>
+                <p>What must be collected, tracked, or maintained?</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+            <div class="drop-zone" id="process-bin" data-component="Process">
+                <h3>✅ Process (The Operational Workflow)</h3>
+                <p>What are the repeatable, documented procedures?</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+            <div class="drop-zone" id="people-bin" data-component="People">
+                <h3>🧑‍🤝‍🧑 People (The Human Agents)</h3>
+                <p>Who is needed to run the system and make decisions?</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <button id="checkAnswerBtn">✅ Check Blueprint & Review Dependencies</button>
+            <div id="feedback"></div>
+        </div>
+
+    </div>
+
+    <script src="1cisscript.js"></script>
+</body>
+
+</html>
