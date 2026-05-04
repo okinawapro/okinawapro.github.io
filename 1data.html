@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knowledge Pyramid Sort Workshop</title>
+    <link rel="stylesheet" href="1datastyles.css">
+</head>
+
+<body class="">
+
+    <div class="container">
+
+        <header>
+            <h1>🧠 Knowledge Pyramid Sort</h1>
+            <p><strong>Objective:</strong> To reinforce the conceptual hierarchy: Data $\rightarrow$ Information
+                $\rightarrow$ Knowledge. Drag each scenario card into the appropriate tier.</p>
+            <hr>
+            <p class="academic-note">*(Professor's Note: Remember the flow! Data is just raw facts. Information adds
+                context (who, what, where). Knowledge is actionable insight that tells us what to do.)*</p>
+        </header>
+
+        <div class="card-area">
+
+            <!-- Source Card Area (The Cards to be sorted) -->
+            <div class="card-area" style="flex-basis: 100%;" id="source-card-area">
+                <h2>🗺️ Unallocated Scenarios (The Concepts)</h2>
+                <!-- Cards will be inserted and shuffled here by JavaScript -->
+                <div class="card" id="card-b_trans" draggable="true" data-component="Data">1. 1,200 total transactions
+                    processed on the system today.</div>
+                <div class="card" id="card-e_sensor" draggable="true" data-component="Data">2. The sensor reported a
+                    temperature of 35°C.</div>
+                <div class="card" id="card-traffic_25" draggable="true" data-component="Data">3. The average traffic
+                    speed was 25 mph at 8 AM.</div>
+                <div class="card" id="card-data_raw" draggable="true" data-component="Data">4. The raw system log
+                    recorded 'Login Successful' 45 times.</div>
+
+                <div class="card" id="card-a_miami" draggable="true" data-component="Information">Miami's average
+                    temperature for May was 27°C.</div>
+                <div class="card" id="card-d_speed" draggable="true" data-component="Information">Last month's average
+                    traffic speed was 25 mph, which is a 10% increase from the month before.</div>
+                <div class="card" id="card-logs_time" draggable="true" data-component="Information">The high number of
+                    successful logins indicates increased staff presence during the night shift.</div>
+                <div class="card" id="card-revenue_month" draggable="true" data-component="Information">Sales were up
+                    15% compared to the same month last year.</div>
+                <div class="card" id="card-high_rainfall" draggable="true" data-component="Information">Rainfall rates
+                    increased by 20% compared to the historical average for this time of year.</div>
+
+                <div class="card" id="card-c_promo" draggable="true" data-component="Knowledge">Based on temperature and
+                    sales data, we should launch a discounted swimwear promotion on Monday.</div>
+                <div class="card" id="card-action_fleet" draggable="true" data-component="Knowledge">Since traffic speed
+                    is high and rainfall is also increasing, the city should reroute public transport along Main St.
+                    starting tomorrow.</div>
+                <div class="card" id="card-invest_staff" draggable="true" data-component="Knowledge">The increased
+                    activity and successful logins suggest that we need to hire at least two additional security staff
+                    members for the next quarter.</div>
+            </div>
+
+            <!-- Drop Zones (The Tiers) -->
+            <div class="drop-zone" id="data-bin" data-component="Data">
+                <h3>📊 DATA (Raw Facts)</h3>
+                <p>Discrete, uncontextualized measurements (e.g., numbers, single readings).</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+            <div class="drop-zone" id="info-bin" data-component="Information">
+                <h3>📝 INFORMATION (Tells a Story)</h3>
+                <p>Data + Context. Answers 'who,' 'what,' 'when,' and 'where.' Creates a narrative.</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+            <div class="drop-zone" id="knowledge-bin" data-component="Knowledge">
+                <h3>🚀 KNOWLEDGE (Informs Action)</h3>
+                <p>Information + Insight. Answers 'why' and 'how.' Leads to decisions or strategies.</p>
+                <div class="drop-zone-contents"></div>
+            </div>
+
+        </div>
+
+        <div class="controls">
+            <button id="checkAnswerBtn">✅ Check Pyramid & Review Dependencies</button>
+            <div id="feedback"></div>
+        </div>
+
+    </div>
+
+    <script src="1datascript.js"></script>
+</body>
+
+</html>
