@@ -101,7 +101,7 @@
     <div class="container">
         <!-- COLUMN 1: Random References -->
         <div class="column">
-            <h2 style="color: #333;">🔢 Random Check (100-1024)</h2>
+            <h2 style="color: #333;">🔢 Random Check (0-65535)</h2>
             <p>These random numbers must be replicated using the 16 switches (L-R).</p>
             <div id="random-numbers-container" class="random-numbers">
                 <!-- Random numbers will be inserted here by JavaScript -->
@@ -115,6 +115,7 @@
             <table class="binary-table" id="switchboard-table">
                 <!-- Table content will be generated here by JavaScript -->
             </table>
+            <button id="btnClear" onclick="checkboxClear()">Clear</button>
         </div>
 
         <!-- COLUMN 3: Output -->
@@ -239,6 +240,18 @@
             document.getElementById('result').textContent = decimalValue;
         }
 
+        function checkboxClear(){
+            try {
+                    // Select all checkboxes on the page
+                    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+                    
+                    // Uncheck each one
+                    checkboxes.forEach(cb => cb.checked = false);
+                } catch (error) {
+                    console.error("Error clearing checkboxes:", error);
+                }
+          
+        }
         // --- Initialization ---
         window.onload = function() {
             generateRandomNumbers();
