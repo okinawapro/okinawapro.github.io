@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Network Components Data Flow Simulator</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f8fafc; padding:20px; }
+h1 { text-align:center; }
+svg { display:block; margin:20px auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; }
+.component { fill:#e5e7eb; stroke:#334155; stroke-width:2; }
+.label { font-size:12px; text-anchor:middle; fill:#1e293b; }
+.link { stroke:#94a3b8; stroke-width:3; }
+.packet { fill:#3b82f6; }
+</style>
+</head>
+<body>
+<h1>Network Components – Data Packet Journey</h1>
+<svg width="900" height="250" viewBox="0 0 900 250">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
+    </marker>
+  </defs>
+
+  <!-- Links -->
+  <line class="link" x1="60" y1="125" x2="170" y2="125" marker-end="url(#arrow)" />
+  <line class="link" x1="210" y1="125" x2="320" y2="125" marker-end="url(#arrow)" />
+  <line class="link" x1="360" y1="125" x2="470" y2="125" marker-end="url(#arrow)" />
+  <line class="link" x1="510" y1="125" x2="620" y2="125" marker-end="url(#arrow)" />
+  <line class="link" x1="660" y1="125" x2="770" y2="125" marker-end="url(#arrow)" />
+
+  <!-- Components -->
+  <g>
+    <rect class="component" x="20" y="95" width="80" height="60" rx="8" />
+    <title>Network Interface Card (NIC): Connects a computer to the network and prepares data for transmission.</title>
+    <text class="label" x="60" y="132">NIC</text>
+  </g>
+
+  <g>
+    <rect class="component" x="140" y="95" width="80" height="60" rx="8" />
+    <title>Repeater: Regenerates and amplifies signals to extend network distance.</title>
+    <text class="label" x="180" y="132">Repeater</text>
+  </g>
+
+  <g>
+    <rect class="component" x="260" y="95" width="80" height="60" rx="8" />
+    <title>Bridge: Connects network segments and filters traffic using MAC addresses.</title>
+    <text class="label" x="300" y="132">Bridge</text>
+  </g>
+
+  <g>
+    <rect class="component" x="380" y="95" width="80" height="60" rx="8" />
+    <title>Hub: Broadcasts incoming data to all connected devices.</title>
+    <text class="label" x="420" y="132">Hub</text>
+  </g>
+
+  <g>
+    <rect class="component" x="500" y="95" width="80" height="60" rx="8" />
+    <title>Switch: Sends data only to the intended device using MAC addresses.</title>
+    <text class="label" x="540" y="132">Switch</text>
+  </g>
+
+  <g>
+    <rect class="component" x="620" y="95" width="80" height="60" rx="8" />
+    <title>Router: Routes packets between different networks based on IP addresses.</title>
+    <text class="label" x="660" y="132">Router</text>
+  </g>
+
+  <g>
+    <rect class="component" x="740" y="95" width="120" height="60" rx="8" />
+    <title>Gateway: Translates data between different network architectures or protocols.</title>
+    <text class="label" x="800" y="132">Gateway</text>
+  </g>
+
+  <!-- Animated Packet -->
+  <circle class="packet" r="8">
+    <animateMotion dur="6s" repeatCount="indefinite"
+      path="M60 80 L180 80 L300 80 L420 80 L540 80 L660 80 L800 80" />
+  </circle>
+</svg>
+
+<p style="text-align:center; max-width:800px; margin:auto;">
+  Hover over each component to see its role in the network. Watch how a data packet travels from a NIC through network devices until it reaches a gateway.
+</p>
+
+</body>
+</html>
