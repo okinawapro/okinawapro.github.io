@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OSI Model – Devices & Drag-and-Drop Activity</title>
+<style>
+body { font-family: Arial, Helvetica, sans-serif; background:#f8fafc; padding:20px; color:#1e293b; }
+h1, h2 { text-align:center; }
+
+/* Table styling */
+table { border-collapse: collapse; width: 100%; max-width: 1100px; margin: 0 auto 30px auto; }
+th, td { border:1px solid #cbd5e1; padding:8px 10px; text-align:left; }
+th { background:#e2e8f0; }
+.layer-num { text-align:center; font-weight:bold; }
+
+/* Drag & Drop */
+.activity { max-width: 1100px; margin: auto; }
+.layers { display:grid; grid-template-columns: repeat(7, 1fr); gap:10px; margin-bottom:25px; }
+.layer-box {
+  background:#f1f5f9;
+  border:2px dashed #94a3b8;
+  border-radius:8px;
+  padding:10px;
+  min-height:110px;
+}
+.layer-box h3 { margin:0 0 5px 0; font-size:14px; text-align:center; }
+
+.devices { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+.device {
+  padding:6px 10px;
+  background:#dbeafe;
+  border:1px solid #1e3a8a;
+  border-radius:6px;
+  cursor:grab;
+  font-size:13px;
+}
+
+.correct { background:#bbf7d0 !important; border-color:#166534 !important; }
+.incorrect { background:#fecaca !important; border-color:#991b1b !important; }
+.instructions { text-align:center; margin-bottom:15px; }
+</style>
+</head>
+<body>
+
+<h1>OSI Layer Model</h1>
+
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Name</th>
+<th>What It Does</th>
+<th>Typical Devices / Components</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="layer-num">7</td>
+<td>Application</td>
+<td>Provides network services directly to user applications.</td>
+<td>Web Browser, Email Client, FTP Application</td>
+</tr>
+<tr>
+<td class="layer-num">6</td>
+<td>Presentation</td>
+<td>Formats, encrypts, and compresses data.</td>
+<td>Encryption (SSL/TLS), Compression, Format Conversion</td>
+</tr>
+<tr>
+<td class="layer-num">5</td>
+<td>Session</td>
+<td>Manages sessions and controls connections.</td>
+<td>Session Manager, NetBIOS Session Service</td>
+</tr>
+<tr>
+<td class="layer-num">4</td>
+<td>Transport</td>
+<td>Provides reliable or best-effort delivery and flow control.</td>
+<td>TCP, UDP, Load Balancer</td>
+</tr>
+<tr>
+<td class="layer-num">3</td>
+<td>Network</td>
+<td>Routes packets between networks using logical addressing.</td>
+<td>Router, Layer‑3 Switch</td>
+</tr>
+<tr>
+<td class="layer-num">2</td>
+<td>Data Link</td>
+<td>Handles physical addressing and frame delivery.</td>
+<td>Switch, Bridge, Network Interface Card (NIC)</td>
+</tr>
+<tr>
+<td class="layer-num">1</td>
+<td>Physical</td>
+<td>Transmits raw bits over the physical medium.</td>
+<td>Hub, Repeater, Cables</td>
+</tr>
+</tbody>
+</table>
+
+<h2>Drag & Drop Activity – Match Devices to the OSI Layer</h2>
+<div class="instructions">
+Drag each device into the correct OSI layer. Each layer has <strong>at least two correct devices</strong>.
+</div>
+
+<div class="activity">
+  <div class="layers">
+    <div class="layer-box" data-layer="7"><h3>Layer 7<br>Application</h3></div>
+    <div class="layer-box" data-layer="6"><h3>Layer 6<br>Presentation</h3></div>
+    <div class="layer-box" data-layer="5"><h3>Layer 5<br>Session</h3></div>
+    <div class="layer-box" data-layer="4"><h3>Layer 4<br>Transport</h3></div>
+    <div class="layer-box" data-layer="3"><h3>Layer 3<br>Network</h3></div>
+    <div class="layer-box" data-layer="2"><h3>Layer 2<br>Data Link</h3></div>
+    <div class="layer-box" data-layer="1"><h3>Layer 1<br>Physical</h3></div>
+  </div>
+
+  <div class="devices">
+    <div class="device" draggable="true" data-answer="7">Web Browser</div>
+    <div class="device" draggable="true" data-answer="7">Email Client</div>
+
+    <div class="device" draggable="true" data-answer="6">Encryption (TLS)</div>
+    <div class="device" draggable="true" data-answer="6">Compression</div>
+
+    <div class="device" draggable="true" data-answer="5">Session Manager</div>
+    <div class="device" draggable="true" data-answer="5">NetBIOS Session</div>
+
+    <div class="device" draggable="true" data-answer="4">TCP</div>
+    <div class="device" draggable="true" data-answer="4">UDP</div>
+
+    <div class="device" draggable="true" data-answer="3">Router</div>
+    <div class="device" draggable="true" data-answer="3">Layer‑3 Switch</div>
+
+    <div class="device" draggable="true" data-answer="2">Switch</div>
+    <div class="device" draggable="true" data-answer="2">Bridge</div>
+    <div class="device" draggable="true" data-answer="2">NIC</div>
+
+    <div class="device" draggable="true" data-answer="1">Hub</div>
+    <div class="device" draggable="true" data-answer="1">Repeater</div>
+    <div class="device" draggable="true" data-answer="1">Ethernet Cable</div>
+  </div>
+</div>
+
+<script>
+let draggedItem = null;
+
+document.querySelectorAll('.device').forEach(item => {
+  item.addEventListener('dragstart', () => {
+    draggedItem = item;
+  });
+});
+
+document.querySelectorAll('.layer-box').forEach(box => {
+  box.addEventListener('dragover', e => e.preventDefault());
+
+  box.addEventListener('drop', () => {
+    if (!draggedItem) return;
+    const correctLayer = draggedItem.dataset.answer;
+    const targetLayer = box.dataset.layer;
+
+    if (correctLayer === targetLayer) {
+      draggedItem.classList.add('correct');
+      draggedItem.classList.remove('incorrect');
+      box.appendChild(draggedItem);
+    } else {
+      draggedItem.classList.add('incorrect');
+      setTimeout(() => draggedItem.classList.remove('incorrect'), 1000);
+    }
+    draggedItem = null;
+  });
+});
+</script>
+
+</body>
+</html>
