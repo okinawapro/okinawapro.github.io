@@ -1,86 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Network Components Data Flow Simulator</title>
+<meta charset="UTF-8" />
+<title>Network Components with Repeater and Bridge</title>
 <style>
-body { font-family: Arial, sans-serif; background:#f8fafc; padding:20px; }
+body { font-family: Arial, sans-serif; background:#f8fafc; padding:20px; color:#1e293b; }
 h1 { text-align:center; }
-svg { display:block; margin:20px auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:12px; }
+svg { display:block; margin:20px auto; background:#ffffff; border:1px solid #cbd5e1; border-radius:14px; }
+
+/* Device styling */
 .component { fill:#e5e7eb; stroke:#334155; stroke-width:2; }
-.label { font-size:12px; text-anchor:middle; fill:#1e293b; }
+.enddevice { fill:#dbeafe; stroke:#1e3a8a; stroke-width:2; }
+.phone { fill:#fef3c7; stroke:#92400e; stroke-width:2; }
+
+.label { font-size:11px; text-anchor:middle; fill:#1e293b; }
 .link { stroke:#94a3b8; stroke-width:3; }
+.altlink { stroke:#64748b; stroke-width:3; stroke-dasharray:4 4; }
 .packet { fill:#3b82f6; }
 </style>
 </head>
 <body>
-<h1>Network Components – Data Packet Journey</h1>
-<svg width="900" height="250" viewBox="0 0 900 250">
-  <defs>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="6" refY="3" orient="auto">
-      <path d="M0,0 L0,6 L9,3 z" fill="#94a3b8" />
-    </marker>
-  </defs>
 
-  <!-- Links -->
-  <line class="link" x1="60" y1="125" x2="170" y2="125" marker-end="url(#arrow)" />
-  <line class="link" x1="210" y1="125" x2="320" y2="125" marker-end="url(#arrow)" />
-  <line class="link" x1="360" y1="125" x2="470" y2="125" marker-end="url(#arrow)" />
-  <line class="link" x1="510" y1="125" x2="620" y2="125" marker-end="url(#arrow)" />
-  <line class="link" x1="660" y1="125" x2="770" y2="125" marker-end="url(#arrow)" />
+<h1>Network Components – Extended Data Flow with Repeater & Bridge</h1>
 
-  <!-- Components -->
+<svg width="1000" height="480" viewBox="0 0 1000 480">
+
+  <!-- Links: PCs -> Repeater -> Hub -> Switch -->
+  <line class="link" x1="90" y1="90" x2="200" y2="150" />
+  <line class="link" x1="90" y1="170" x2="200" y2="150" />
+  <line class="link" x1="200" y1="150" x2="350" y2="150" />
+  <line class="link" x1="350" y1="150" x2="520" y2="150" />
+
+  <!-- Switch to Router -->
+  <line class="link" x1="590" y1="150" x2="700" y2="150" />
+
+  <!-- Router to Gateway -->
+  <line class="link" x1="770" y1="150" x2="890" y2="150" />
+
+  <!-- Bridge to Other Network -->
+  <line class="altlink" x1="520" y1="180" x2="520" y2="300" />
+  <line class="altlink" x1="520" y1="300" x2="760" y2="300" />
+
+  <!-- End Devices -->
   <g>
-    <rect class="component" x="20" y="95" width="80" height="60" rx="8" />
-    <title>Network Interface Card (NIC): Connects a computer to the network and prepares data for transmission.</title>
-    <text class="label" x="60" y="132">NIC</text>
+    <rect class="enddevice" x="30" y="60" width="120" height="50" rx="8" />
+    <title>PC: End device that generates and consumes application data.</title>
+    <text class="label" x="90" y="90">PC 1</text>
   </g>
 
   <g>
-    <rect class="component" x="140" y="95" width="80" height="60" rx="8" />
-    <title>Repeater: Regenerates and amplifies signals to extend network distance.</title>
-    <text class="label" x="180" y="132">Repeater</text>
+    <rect class="enddevice" x="30" y="140" width="120" height="50" rx="8" />
+    <title>PC: End device sending traffic into the network.</title>
+    <text class="label" x="90" y="170">PC 2</text>
   </g>
 
+  <!-- Smartphone -->
   <g>
-    <rect class="component" x="260" y="95" width="80" height="60" rx="8" />
-    <title>Bridge: Connects network segments and filters traffic using MAC addresses.</title>
-    <text class="label" x="300" y="132">Bridge</text>
+    <rect class="phone" x="30" y="240" width="120" height="60" rx="18" />
+    <title>Smartphone: Wireless end device. Traffic still enters the wired network through access infrastructure.</title>
+    <text class="label" x="90" y="275">Smartphone</text>
   </g>
 
+  <!-- Repeater -->
   <g>
-    <rect class="component" x="380" y="95" width="80" height="60" rx="8" />
-    <title>Hub: Broadcasts incoming data to all connected devices.</title>
-    <text class="label" x="420" y="132">Hub</text>
+    <rect class="component" x="170" y="120" width="120" height="60" rx="8" />
+    <title>Repeater: Regenerates and amplifies signals so data can travel longer distances without degradation.</title>
+    <text class="label" x="230" y="155">Repeater</text>
   </g>
 
+  <!-- Hub -->
   <g>
-    <rect class="component" x="500" y="95" width="80" height="60" rx="8" />
-    <title>Switch: Sends data only to the intended device using MAC addresses.</title>
-    <text class="label" x="540" y="132">Switch</text>
+    <rect class="component" x="320" y="120" width="120" height="60" rx="8" />
+    <title>Hub: Broadcasts incoming signals to all connected ports. Does not filter traffic.</title>
+    <text class="label" x="380" y="155">Hub</text>
   </g>
 
+  <!-- Switch -->
   <g>
-    <rect class="component" x="620" y="95" width="80" height="60" rx="8" />
-    <title>Router: Routes packets between different networks based on IP addresses.</title>
-    <text class="label" x="660" y="132">Router</text>
+    <rect class="component" x="470" y="120" width="140" height="60" rx="8" />
+    <title>Switch: Forwards frames only to the correct destination using MAC addresses.</title>
+    <text class="label" x="540" y="155">Switch</text>
   </g>
 
+  <!-- Router -->
   <g>
-    <rect class="component" x="740" y="95" width="120" height="60" rx="8" />
+    <rect class="component" x="670" y="120" width="120" height="60" rx="8" />
+    <title>Router: Routes packets between different IP networks.</title>
+    <text class="label" x="730" y="155">Router</text>
+  </g>
+
+  <!-- Gateway -->
+  <g>
+    <rect class="component" x="840" y="120" width="140" height="60" rx="8" />
     <title>Gateway: Translates data between different network architectures or protocols.</title>
-    <text class="label" x="800" y="132">Gateway</text>
+    <text class="label" x="910" y="155">Gateway</text>
+  </g>
+
+  <!-- Bridge -->
+  <g>
+    <rect class="component" x="450" y="270" width="140" height="60" rx="8" />
+    <title>Bridge: Connects and filters traffic between two separate network segments using MAC addresses. Used here to connect to a different network while reducing unnecessary traffic.</title>
+    <text class="label" x="520" y="305">Bridge</text>
+  </g>
+
+  <!-- Other Network -->
+  <g>
+    <rect class="component" x="740" y="270" width="180" height="60" rx="8" />
+    <title>Separate Network Segment: Different collision domain connected via a bridge.</title>
+    <text class="label" x="830" y="305">Other Network</text>
   </g>
 
   <!-- Animated Packet -->
   <circle class="packet" r="8">
-    <animateMotion dur="6s" repeatCount="indefinite"
-      path="M60 80 L180 80 L300 80 L420 80 L540 80 L660 80 L800 80" />
+    <animateMotion dur="10s" repeatCount="indefinite"
+      path="M 90 90 L 230 150 L 380 150 L 540 150 L 730 150 L 910 150" />
   </circle>
+
 </svg>
 
-<p style="text-align:center; max-width:800px; margin:auto;">
-  Hover over each component to see its role in the network. Watch how a data packet travels from a NIC through network devices until it reaches a gateway.
+<p style="text-align:center; max-width:940px; margin:auto;">
+  This diagram shows how <strong>end devices</strong> connect through access and distribution components.
+  A <strong>repeater</strong> extends signal distance before a hub.
+  A <strong>bridge</strong> connects to a separate network segment while filtering traffic.
+  <br><br>
+  <em>Hover over any device to see its role.</em>
 </p>
 
 </body>
