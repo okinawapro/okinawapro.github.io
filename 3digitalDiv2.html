@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Manifesto Engineer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1e3c72;
+            border-bottom: 3px solid #4a90e2;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #333;
+            margin-top: 25px;
+            border-left: 4px solid #4a90e2;
+            padding-left: 10px;
+        }
+        .section {
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #cce0f0;
+            border-radius: 8px;
+            background-color: #e9eff5;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+            margin-right: 15px;
+        }
+        #button-analyze {
+            background-color: #4a90e2;
+            color: white;
+        }
+        #button-analyze:hover {
+            background-color: #3a78b9;
+        }
+        #copy-prompt {
+            background-color: #28a745;
+            color: white;
+        }
+        #copy-prompt:hover {
+            background-color: #218838;
+        }
+        #openai-link {
+            background-color: #ff8c00; /* Orange for warning/action */
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .output-container {
+            background-color: #f0f8ff;
+            padding: 20px;
+            border: 2px dashed #4a90e2;
+            border-radius: 8px;
+        }
+        .ai-header {
+            font-weight: bold;
+            color: #1e3c72;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed #aaa;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body style="background-color: #f4f7f9;">
+
+    <div class="container">
+        <h1 style="color: #1e3c72;">📢 Digital Inclusion Manifesto Creator</h1>
+        <p><strong>Goal:</strong> Create a structured, compelling manifesto. This output will be copied and used to prompt an advanced AI (like ChatGPT or Gemini) for a professional critique.</p>
+
+        <!-- SECTION 1: Policy -->
+        <div class="section">
+            <h2>🏛️ 1. Policy & Regulation (The Law)</h2>
+            <p>What laws must change to mandate equity?</p>
+            <label for="policy_manifesto">Policy Manifesto:</label>
+            <textarea id="policy_manifesto" rows="4" placeholder="Example: Mandate public funding for community internet hubs in all low-income areas."></textarea>
+        </div>
+
+        <!-- SECTION 2: Technology -->
+        <div class="section">
+            <h2>⚙️ 2. Technological Solutions (The Infrastructure)</h2>
+            <p>What physical tech is required? Must be sustainable and low-cost.</p>
+            <label for="tech_manifesto">Technology Manifesto:</label>
+            <textarea id="tech_manifesto" rows="4" placeholder="Example: Implement a decentralized, solar-powered mesh repeater network to avoid central failure points."></textarea>
+        </div>
+
+        <!-- SECTION 3: Social Pillars -->
+        <div class="section">
+            <h2>📚 3. Social/Educational Pillars (The Human Element)</h2>
+            <p>How do we teach people to use the technology effectively?</p>
+            <label for="social_manifesto">Social/Educational Manifesto:</label>
+            <textarea id="social_manifesto" rows="4" placeholder="Example: Implement required vocational training in digital asset management for local artists."></textarea>
+        </div>
+
+        <button id="button-analyze" onclick="generatePrompt()">Generate AI Prompt</button>
+
+        <!-- PROMPT OUTPUT AREA -->
+        <div class="section" id="output-section" style="display: none;">
+            <h2 style="color: #1e3c72;">🗃️ Your Final Expert Prompt</h2>
+            <p>This text is ready to be copied and pasted into an advanced AI chat interface (e.g., ChatGPT, Gemini).</p>
+            
+            <div class="output-container">
+                <textarea id="prompt-area" rows="15" readonly placeholder="The generated prompt will appear here..."></textarea>
+                <button id="copy-prompt" onclick="copyPrompt()">📋 Copy Prompt Text</button>
+                <a id="openai-link" href="https://chat.openai.com/?prompt=" target="_blank">🚀 Send Prompt to ChatGPT</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * Main function to compile the complex prompt.
+         * @param {string} policy - User's policy input.
+         * @param {string} tech - User's technology input.
+         * @param {string} social - User's social input.
+         */
+        function generatePrompt() {
+            const policy = document.getElementById('policy_manifesto').value.trim();
+            const tech = document.getElementById('tech_manifesto').value.trim();
+            const social = document.getElementById('social_manifesto').value.trim();
+            
+            // --- The Structured Prompt Template ---
+            const prompt = `
+                [SYSTEM ROLE]
+                You are a Digital Divide Solutions Council, a collaborative team of experts working together to eliminate inequalities in access to technology, digital skills, and online opportunities.
+                You think and respond as a panel, not as a single expert. Every answer must intentionally reflect multiple perspectives, even if one perspective seems dominant.
+
+                Required Perspectives (Never Skip These)
+                In every response, you must consider and clearly represent insights from all the following roles:
+
+                Educator & Librarian
+                Focus: Digital literacy, teaching strategies, access to learning resources
+                Key question: How do people learn to use technology meaningfully?
+
+                Technology & IT Professional
+                Focus: Infrastructure, devices, software, cybersecurity, scalability
+                Key question: What technology must exist and how can it be built affordably?
+
+                Government & Policy Leader
+                Focus: Laws, funding, public programs, equity, long-term planning
+                Key question: What systems and policies enable access at scale?
+
+                Community Organizer / Nonprofit Advocate
+                Focus: Marginalized groups, trust, local needs, outreach
+                Key question: Who is being left out and why?
+
+                Telecommunications / Industry Representative
+                Focus: Internet access, pricing models, infrastructure partnerships
+                Key question: How do we deliver reliable and affordable connectivity?
+
+                Accessibility & Inclusion Specialist
+                Focus: Disability access, language, usability, inclusive design
+                Key question: Who still cannot use this technology even if they have it?
+
+                [CONTEXT & INPUT MANIFESTO]
+                The community is located in a resource-constrained area with low digital literacy. The proposed solution, named the 'Sustainable Digital Leap,' is structured around three pillars:
+                
+                1. Policy Pillar: ${policy}
+                2. Technology Pillar: ${tech}
+                3. Social Pillar: ${social}
+
+                [TASK INSTRUCTIONS]
+                Your critique must fulfill two requirements:
+                1. Analysis Paragraph: Critically analyze the proposal by discussing the gaps. Focus specifically on the intersectional failures (e.g., how does the policy fail if the technology is poor? How does the lack of literacy undermine the tech?). Format the response separating each particular view.
+                2. Solution Paragraph: Provide two clear, concrete, and immediate next steps. These steps must be actionable and realistic, offering specific, manageable improvements to the original plan. Format the solution to be impactful.
+
+                [FORMAT CONSTRAINT]
+                You MUST restrict your response to less than 600 words. Do not deviate from this structure.`;
+
+            // 1. Populate the text area
+            const promptArea = document.getElementById('prompt-area');
+            promptArea.value = prompt;
+
+            // 2. Display the output section
+            document.getElementById('output-section').style.display = 'block';
+        }
+
+        /**
+         * Copies the text from the textarea and prepares the external link.
+         */
+        function copyPrompt() {
+            const promptArea = document.getElementById('prompt-area');
+            promptArea.select();
+            document.execCommand('copy');
+            alert("✅ Successfully copied the prompt! You can now paste it into ChatGPT or Gemini.");
+        }
+
+        /**
+         * Opens ChatGPT in a new window and pre-fills the prompt.
+         * Note: We must URL-encode the prompt to prevent broken links.
+         */
+        function openChatGPTLink() {
+            const promptArea = document.getElementById('prompt-area');
+            const promptText = promptArea.value;
+            
+            // Encode the prompt text for safe URL passing
+            const encodedPrompt = encodeURIComponent(promptText);
+            
+            // Open the URL in a new tab
+            window.open(`https://chat.openai.com/?prompt=${encodedPrompt}`, '_blank');
+        }
+
+        // Attaching event listeners to buttons
+        document.getElementById('button-analyze').addEventListener('click', generatePrompt);
+        document.getElementById('copy-prompt').addEventListener('click', copyPrompt);
+        
+        // Changing the link button to call the new function
+        document.getElementById('openai-link').addEventListener('click', (event) => {
+            // Prevent the default link behavior
+            event.preventDefault(); 
+            
+            const promptArea = document.getElementById('prompt-area');
+            const promptText = promptArea.value;
+            const encodedPrompt = encodeURIComponent(promptText);
+            
+            window.open(`https://chat.openai.com/?prompt=${encodedPrompt}`, '_blank');
+        });
+    </script>
+</body>
+</html>
+
