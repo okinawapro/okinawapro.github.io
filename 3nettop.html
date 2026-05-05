@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Network Topology Data Flow Simulator</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f8fafc; padding:20px; }
+    h1 { text-align:center; }
+    .controls { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
+    select, button { padding:6px 10px; }
+    svg { display:block; margin:auto; background:#fff; border:1px solid #cbd5e1; border-radius:10px; }
+    .pc { fill:#e5e7eb; stroke:#334155; stroke-width:2; }
+    .source { fill:#bbf7d0; }
+    .destination { fill:#fecaca; }
+    .link { stroke:#94a3b8; stroke-width:3; cursor:pointer; }
+    .mesh { stroke:#cbd5e1; stroke-width:2; }
+    .broken { stroke:#ef4444; stroke-dasharray:6 4; }
+    .hub { fill:#64748b; }
+    .packet { fill:#3b82f6; }
+  </style>
+</head>
+<body>
+<h1>Network Topology Data Flow Simulator</h1>
+<div class="controls">
+  <select id="topology">
+    <option value="bus">Bus</option>
+    <option value="ring">Ring</option>
+    <option value="star">Star</option>
+    <option value="mesh">Mesh</option>
+  </select>
+  <select id="source"></select>
+  <select id="destination"></select>
+  <button id="clear">Clear Failures</button>
+</div>
+<svg id="svg" width="700" height="420"></svg>
+<script>
+const computers = [
+ {id:0,x:100,y:200},{id:1,x:250,y:80},{id:2,x:450,y:80},{id:3,x:600,y:200},{id:4,x:350,y:320}
+];
+const hub = {x:350,y:200};
+const svg = document.getElementById('svg');
+const topoSel = document.getElementById('topology');
+const srcSel = document.getElementById('source');
+const dstSel = document.getElementById('destination');
+const failures = new Set();
+let interval;
+
+computers.forEach(c=>{
+  srcSel.add(new Option('Source PC '+(c.id+1),c.id));
+  dstSel.add(new Option('Destination PC '+(c.id+1),c.id));
+});
+dstSel.value=3;
+
+function isBroken(id){return failures.has(id);} 
+function toggle(id){failures.has(id)?failures.delete(id):failures.add(id); render();}
+
+function path(){
+  const s=+srcSel.value,d=+dstSel.value;
+  if(s===d) return [];
+  if(topoSel.value==='ring'){
+    let p=[s],c=s;
+    while(c!==d){let n=(c+1)%computers.length; if(isBroken('ring-'+c+'-'+n)) return []; p.push(n); c=n;}
+    return p;
+  }
+  if(topoSel.value==='star'){
+    if(isBroken('star-'+s)||isBroken('star-'+d)) return [];
+    return [s,'hub',d];
+  }
+  if(topoSel.value==='bus'){
+    const ord=[...computers].sort((a,b)=>a.x-b.x).map(c=>c.id);
+    let i=ord.indexOf(s),j=ord.indexOf(d),step=i<j?1:-1,p=[ord[i]];
+    while(i!==j){let a=ord[i],b=ord[i+step]; if(isBroken('bus-'+a+'-'+b)) return []; p.push(b); i+=step;}
+    return p;
+  }
+  if(topoSel.value==='mesh'){
+    if(!isBroken('mesh-'+s+'-'+d)) return [s,d];
+    for(const c of computers){if(c.id!==s&&c.id!==d&&!isBroken('mesh-'+s+'-'+c.id)&&!isBroken('mesh-'+c.id+'-'+d))return[s,c.id,d];}
+  }
+  return [];
+}
+
+function clear(){while(svg.firstChild)svg.removeChild(svg.firstChild);} 
+
+function drawLine(x1,y1,x2,y2,id,cls=''){
+  const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+  l.setAttribute('x1',x1);l.setAttribute('y1',y1);
+  l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+  l.setAttribute('class','link '+cls+(isBroken(id)?' broken':''));
+  l.onclick=()=>toggle(id); svg.appendChild(l);
+}
+
+function render(){
+  clear(); clearInterval(interval);
+  const t=topoSel.value;
+  if(t==='ring') computers.forEach((c,i)=>{
+    const n=computers[(i+1)%computers.length]; drawLine(c.x,c.y,n.x,n.y,'ring-'+c.id+'-'+n.id);
+  });
+  if(t==='star'){computers.forEach(c=>drawLine(hub.x,hub.y,c.x,c.y,'star-'+c.id));
+    const h=document.createElementNS('http://www.w3.org/2000/svg','circle');h.setAttribute('cx',hub.x);h.setAttribute('cy',hub.y);h.setAttribute('r',10);h.setAttribute('class','hub');svg.appendChild(h);}
+  if(t==='bus'){const o=[...computers].sort((a,b)=>a.x-b.x);
+    for(let i=0;i<o.length-1;i++)drawLine(o[i].x,200,o[i+1].x,200,'bus-'+o[i].id+'-'+o[i+1].id);}
+  if(t==='mesh'){for(let i=0;i<computers.length;i++)for(let j=i+1;j<computers.length;j++)drawLine(computers[i].x,computers[i].y,computers[j].x,computers[j].y,'mesh-'+computers[i].id+'-'+computers[j].id,'mesh');}
+  computers.forEach(c=>{
+    const r=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',c.x-25);r.setAttribute('y',c.y-20);r.setAttribute('width',50);r.setAttribute('height',40);r.setAttribute('rx',6);
+    r.setAttribute('class','pc'+(+srcSel.value===c.id?' source':+dstSel.value===c.id?' destination':'')); svg.appendChild(r);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',c.x);t.setAttribute('y',c.y+5);t.setAttribute('text-anchor','middle');t.textContent='PC '+(c.id+1); svg.appendChild(t);
+  });
+  const p=path(); if(p.length<2)return;
+  let i=0; const pkt=document.createElementNS('http://www.w3.org/2000/svg','circle');pkt.setAttribute('r',8);pkt.setAttribute('class','packet');svg.appendChild(pkt);
+  interval=setInterval(()=>{const a=p[i],b=p[++i% (p.length-1)]; const A=a==='hub'?hub:computers[a]; const B=b==='hub'?hub:computers[b]; pkt.innerHTML=''; const m=document.createElementNS('http://www.w3.org/2000/svg','animateMotion'); m.setAttribute('dur','1s'); m.setAttribute('path',`M ${A.x} ${A.y-30} L ${B.x} ${B.y-30}`); pkt.appendChild(m); m.beginElement();},1100);
+}
+
+topoSel.onchange=render; srcSel.onchange=render; dstSel.onchange=render; document.getElementById('clear').onclick=()=>{failures.clear();render();};
+render();
+</script>
+</body>
+</html>
