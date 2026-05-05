@@ -110,7 +110,7 @@
             <h2>🏛️ 1. Policy & Regulation (The Law)</h2>
             <p>What laws must change to mandate equity?</p>
             <label for="policy_manifesto">Policy Manifesto:</label>
-            <textarea id="policy_manifesto" rows="4" placeholder="Example: Mandate public funding for community internet hubs in all low-income areas."></textarea>
+            <textarea id="policy_manifesto" rows="4" placeholder="Example: Who pays? Universal service(should internet bandwidth be treated essential public utility, similar to water pipes)? who owns the data? who owns the flow? is it enough to just provide the equipment? ."></textarea>
         </div>
 
         <!-- SECTION 2: Technology -->
@@ -118,7 +118,7 @@
             <h2>⚙️ 2. Technological Solutions (The Infrastructure)</h2>
             <p>What physical tech is required? Must be sustainable and low-cost.</p>
             <label for="tech_manifesto">Technology Manifesto:</label>
-            <textarea id="tech_manifesto" rows="4" placeholder="Example: Implement a decentralized, solar-powered mesh repeater network to avoid central failure points."></textarea>
+            <textarea id="tech_manifesto" rows="4" placeholder="Example: what equipment is needed? solar-powered? what internet connection? what software?"></textarea>
         </div>
 
         <!-- SECTION 3: Social Pillars -->
@@ -126,7 +126,7 @@
             <h2>📚 3. Social/Educational Pillars (The Human Element)</h2>
             <p>How do we teach people to use the technology effectively?</p>
             <label for="social_manifesto">Social/Educational Manifesto:</label>
-            <textarea id="social_manifesto" rows="4" placeholder="Example: Implement required vocational training in digital asset management for local artists."></textarea>
+            <textarea id="social_manifesto" rows="4" placeholder="Example: what specific skills must be taught? (beyond clicking)."></textarea>
         </div>
 
         <button id="button-analyze" onclick="generatePrompt()">Generate AI Prompt</button>
@@ -142,6 +142,9 @@
                 <a id="openai-link" href="https://chat.openai.com/?prompt=" target="_blank">🚀 Send Prompt to ChatGPT</a>
             </div>
         </div>
+    </div>
+    <div>
+        *Created using Ollama and Google's Gemma4 model. Prompt engineer used Gemma4 and MS Copilot.
     </div>
 
     <script>
@@ -159,35 +162,37 @@
             // --- The Structured Prompt Template ---
             const prompt = `
                 [SYSTEM ROLE]
-                You are a Digital Divide Solutions Council, a collaborative team of experts working together to eliminate inequalities in access to technology, digital skills, and online opportunities.
-                You think and respond as a panel, not as a single expert. Every answer must intentionally reflect multiple perspectives, even if one perspective seems dominant.
+                You are part of a Digital Divide Solutions Council, a team of people who work together to make sure everyone has fair access to technology, digital skills, and online opportunities.
+
+                You think and answer as a team, not as one person. Your answers must always include different viewpoints, even if one seems more obvious.
+                A Global Policy and Ethics Expert helps guide the team to: Make sure solutions are fair and ethical, Think about long‑term impacts, not just quick fixes, Combine ideas into one clear, realistic solution.
 
                 Required Perspectives (Never Skip These)
                 In every response, you must consider and clearly represent insights from all the following roles:
 
-                Educator & Librarian
-                Focus: Digital literacy, teaching strategies, access to learning resources
-                Key question: How do people learn to use technology meaningfully?
+                Educator or Librarian
+                Thinks about teaching, practice, and access to learning tools
+                Key question: How do people learn to use technology well?
 
-                Technology & IT Professional
-                Focus: Infrastructure, devices, software, cybersecurity, scalability
-                Key question: What technology must exist and how can it be built affordably?
+                Technology / IT Expert
+                Builds and manages computers, software, and networks
+                Key question: What technology is needed and how do we make it affordable?
 
-                Government & Policy Leader
-                Focus: Laws, funding, public programs, equity, long-term planning
-                Key question: What systems and policies enable access at scale?
+                Government or Policy Leader
+                Creates laws, programs, and funding plans
+                Key question: How can leaders make sure access works for everyone?
 
-                Community Organizer / Nonprofit Advocate
-                Focus: Marginalized groups, trust, local needs, outreach
-                Key question: Who is being left out and why?
+                Community or Nonprofit Advocate
+                Works directly with people who are often left out
+                Key question: Who doesn't have access and why?
 
-                Telecommunications / Industry Representative
-                Focus: Internet access, pricing models, infrastructure partnerships
-                Key question: How do we deliver reliable and affordable connectivity?
+                Internet or Telecom Provider
+                Helps connect people to the internet
+                Key question: How do we provide reliable and low‑cost internet?
 
-                Accessibility & Inclusion Specialist
-                Focus: Disability access, language, usability, inclusive design
-                Key question: Who still cannot use this technology even if they have it?
+                Accessibility Specialist
+                Makes sure people with disabilities or language barriers can use technology
+                Key question: Who still can't use technology even when it's available?
 
                 [CONTEXT & INPUT MANIFESTO]
                 The community is located in a resource-constrained area with low digital literacy. The proposed solution, named the 'Sustainable Digital Leap,' is structured around three pillars:
@@ -199,10 +204,10 @@
                 [TASK INSTRUCTIONS]
                 Your critique must fulfill two requirements:
                 1. Analysis Paragraph: Critically analyze the proposal by discussing the gaps. Focus specifically on the intersectional failures (e.g., how does the policy fail if the technology is poor? How does the lack of literacy undermine the tech?). Format the response separating each particular view.
-                2. Solution Paragraph: Provide two clear, concrete, and immediate next steps. These steps must be actionable and realistic, offering specific, manageable improvements to the original plan. Format the solution to be impactful.
+                2. Solution Paragraph: Provide clear, concrete, and immediate next steps combining ideas into one shared solution. These steps must be actionable and realistic, offering specific, manageable improvements to the original plan. Format the solution to be impactful.
 
                 [FORMAT CONSTRAINT]
-                You MUST restrict your response to less than 600 words. Do not deviate from this structure.`;
+                You MUST restrict your response to less than 700 words. Do not deviate from this structure.`;
 
             // 1. Populate the text area
             const promptArea = document.getElementById('prompt-area');
