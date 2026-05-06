@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SDLC Drag & Drop Micro‑Challenge</title>
+
+<style>
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg, #ff933a, #dfdfde);
+  margin: 0;
+  padding: 20px;
+}
+
+h1 { text-align: center; color: #1f2937; margin-bottom: 10px; }
+
+.container {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 20px;
+}
+
+.scenario, .pool {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.pool-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.card {
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: grab;
+  user-select: none;
+  font-weight: 600;
+}
+
+.card.problem {
+  background: rgba(220,38,38,0.25);
+  border: 2px solid rgba(220,38,38,0.5);
+}
+
+.card.solution {
+  background: rgba(22,163,74,0.25);
+  border: 2px solid rgba(22,163,74,0.5);
+}
+
+.dropzone {
+  border: 2px dashed #9ca3af;
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 90px;
+}
+
+.zones {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.phase {
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+button {
+  margin-top: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover { background: #1d4ed8; }
+
+.result {
+  font-weight: bold;
+  margin-top: 12px;
+}
+
+.correct { outline: 3px solid #22c55e; }
+.incorrect { outline: 3px solid #ef4444; }
+
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+}
+
+/* ===== CONFETTI ===== */
+.confetti {
+  position: fixed;
+  top: -10px;
+  width: 10px;
+  height: 10px;
+  opacity: 0.9;
+  animation: fall linear forwards;
+  z-index: 9999;
+}
+
+@keyframes fall {
+  to {
+    transform: translateY(110vh) rotate(720deg);
+  }
+}
+</style>
+</head>
+
+<body>
+
+<h1>SDLC Diagnostic Challenge</h1>
+<p style="text-align:center">Drag cards freely. Diagnose first, then fix.</p>
+
+<div class="container">
+  <div id="scenarios"></div>
+
+  <div class="pool">
+    <h2>Drag Bank</h2>
+    <div class="pool-items" id="items"></div>
+
+    <button onclick="score()">Score My Decisions</button>
+    <button onclick="initializeGame()">Reset</button>
+    <button onclick="solveChallenge()">Solve</button>
+
+    <div id="results" class="result"></div>
+  </div>
+</div>
+
+<script>
+const scenarios = [
+  {
+    phase: "Planning",
+    text: "Features keep being added and deadlines slip.",
+    problems: ["Uncontrolled scope creep", "No feasibility analysis"],
+    solutions: ["Formal change control", "Feasibility & risk assessment"]
+  },
+  {
+    phase: "Analysis",
+    text: "Stakeholders disagree about system behavior.",
+    problems: ["Conflicting requirements", "Incomplete requirements"],
+    solutions: ["Requirements workshops", "Validated requirements doc"]
+  },
+  {
+    phase: "Design",
+    text: "Users say the interface is confusing.",
+    problems: ["Unclear UX", "No user input"],
+    solutions: ["Wireframes & flows", "Usability reviews"]
+  },
+  {
+    phase: "Implementation",
+    text: "Crashes happen post‑launch.",
+    problems: ["Insufficient testing", "Rushed deployment"],
+    solutions: ["Structured testing", "Phased rollout"]
+  }
+];
+
+const pool = document.getElementById('items');
+const scenarioDiv = document.getElementById('scenarios');
+
+function createCard(data) {
+  const d = document.createElement('div');
+  d.className = `card ${data.type}`;
+  d.textContent = data.text;
+  d.dataset.phase = data.phase;
+  d.dataset.type = data.type;
+  d.draggable = true;
+
+  d.ondragstart = e => {
+    window.dragged = d;
+    e.dataTransfer.setData('text/plain', '');
+  };
+  return d;
+}
+
+function allowDrop(e) { e.preventDefault(); }
+
+function handleDrop(e) {
+  e.preventDefault();
+  if (window.dragged) {
+    e.currentTarget.appendChild(window.dragged);
+  }
+}
+
+function enableDrops() {
+  document.querySelectorAll('.dropzone, .pool-items').forEach(z => {
+    z.ondragover = allowDrop;
+    z.ondrop = handleDrop;
+  });
+}
+
+function clearBoard() {
+  pool.innerHTML = '';
+  scenarioDiv.innerHTML = '';
+  document.getElementById('results').textContent = '';
+  window.dragged = null;
+}
+
+function initializeGame() {
+  clearBoard();
+
+  scenarios.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'scenario';
+    el.innerHTML = `
+      <div class="phase">${s.phase} Phase</div>
+      <p>${s.text}</p>
+      <div class="zones">
+        <div class="dropzone" data-phase="${i}" data-type="problem">Problem</div>
+        <div class="dropzone" data-phase="${i}" data-type="solution">Solution</div>
+      </div>`;
+    scenarioDiv.appendChild(el);
+  });
+
+  let cards = [];
+  scenarios.forEach((s, si) => {
+    s.problems.forEach(p =>
+      cards.push({ text: p, type: 'problem', phase: si })
+    );
+    s.solutions.forEach(sol =>
+      cards.push({ text: sol, type: 'solution', phase: si })
+    );
+  });
+
+  cards.sort(() => Math.random() - 0.5);
+  cards.forEach(c => pool.appendChild(createCard(c)));
+
+  enableDrops();
+}
+
+function score() {
+  let correct = 0, incorrect = 0;
+  document.querySelectorAll('.card').forEach(c =>
+    c.classList.remove('correct', 'incorrect')
+  );
+
+  document.querySelectorAll('.dropzone').forEach(z => {
+    const zp = z.dataset.phase;
+    const zt = z.dataset.type;
+
+    Array.from(z.children).forEach(card => {
+      if (card.dataset.phase === zp && card.dataset.type === zt) {
+        card.classList.add('correct');
+        correct++;
+      } else {
+        card.classList.add('incorrect');
+        incorrect++;
+      }
+    });
+  });
+
+  const results = document.getElementById('results');
+
+  if (correct === 16 && incorrect === 0) {
+    results.textContent =
+      '🎉 Perfect! All 16 cards correctly placed — outstanding diagnostic skills!';
+    launchConfetti();
+  } else {
+    results.textContent =
+      `✅ Correct: ${correct} | ❌ Incorrect: ${incorrect}. Adjust and retry.`;
+  }
+}
+
+function solveChallenge() {
+  let solved = 0;
+
+  document.querySelectorAll('.card').forEach(c =>
+    c.classList.remove('incorrect')
+  );
+
+  document.querySelectorAll('.scenario').forEach((section, i) => {
+    const scenario = scenarios[i];
+    const problemZone = section.querySelector('[data-type="problem"]');
+    const solutionZone = section.querySelector('[data-type="solution"]');
+
+    scenario.problems.forEach(text => {
+      const card = [...document.querySelectorAll('.card.problem')]
+        .find(c => c.textContent === text);
+      if (card) {
+        card.classList.add('correct');
+        problemZone.appendChild(card);
+        solved++;
+      }
+    });
+
+    scenario.solutions.forEach(text => {
+      const card = [...document.querySelectorAll('.card.solution')]
+        .find(c => c.textContent === text);
+      if (card) {
+        card.classList.add('correct');
+        solutionZone.appendChild(card);
+        solved++;
+      }
+    });
+  });
+
+  document.getElementById('results').textContent =
+    `🎉 Challenge Solved! ${solved} cards correctly placed.`;
+}
+
+
+/* ===============================
+   AUTO-SCROLL WHILE DRAGGING
+   =============================== */
+
+let autoScrollSpeed = 12;      // scroll speed
+let edgeThreshold = 80;       // px from top/bottom that triggers scroll
+let scrolling = false;
+
+document.addEventListener('dragover', (e) => {
+  e.preventDefault();
+
+  const y = e.clientY;
+  const viewportHeight = window.innerHeight;
+
+  // Scroll UP
+  if (y < edgeThreshold) {
+    if (!scrolling) {
+      scrolling = true;
+      scrollUp();
+    }
+  }
+  // Scroll DOWN
+  else if (y > viewportHeight - edgeThreshold) {
+    if (!scrolling) {
+      scrolling = true;
+      scrollDown();
+    }
+  }
+  // STOP scrolling
+  else {
+    scrolling = false;
+  }
+});
+
+document.addEventListener('dragleave', stopScroll);
+document.addEventListener('drop', stopScroll);
+document.addEventListener('dragend', stopScroll);
+
+function scrollUp() {
+  if (!scrolling) return;
+  window.scrollBy(0, -autoScrollSpeed);
+  requestAnimationFrame(scrollUp);
+}
+
+function scrollDown() {
+  if (!scrolling) return;
+  window.scrollBy(0, autoScrollSpeed);
+  requestAnimationFrame(scrollDown);
+}
+
+function stopScroll() {
+  scrolling = false;
+}
+
+function launchConfetti() {
+  const colors = ['#22c55e', '#3b82f6', '#f59e0b', '#ef4444', '#a855f7'];
+  const confettiCount = 80;
+
+  for (let i = 0; i < confettiCount; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + 'vw';
+    confetti.style.backgroundColor =
+      colors[Math.floor(Math.random() * colors.length)];
+    confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+
+    document.body.appendChild(confetti);
+
+    // Auto‑cleanup
+    setTimeout(() => confetti.remove(), 4000);
+  }
+}
+
+
+initializeGame();
+</script>
+
+</body>
+</html>
