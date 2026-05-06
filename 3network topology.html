@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Network Topology Data Flow Simulator</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background:#f8fafc;
+  padding:20px;
+}
+
+h1 { text-align:center; }
+
+.controls {
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+}
+
+select, button {
+  padding:6px 10px;
+}
+
+#message {
+  text-align:center;
+  font-weight:bold;
+  margin-top:6px;
+  min-height:1.2em;
+}
+
+svg {
+  display:block;
+  margin:auto;
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+}
+
+/* PCs */
+.pc { fill:#e5e7eb; stroke:#334155; stroke-width:2; }
+.source { fill:#bbf7d0; }
+.destination { fill:#fecaca; }
+
+/* Links */
+.link { stroke:#94a3b8; stroke-width:3; cursor:pointer; }
+.mesh { stroke-width:2; }
+.broken { stroke:#ef4444; stroke-dasharray:6 4; }
+
+/* Hub + packet */
+.hub { fill:#64748b; }
+.packet { fill:#3b82f6; }
+</style>
+</head>
+
+<body>
+
+<h1>Network Topology Data Flow Simulator</h1>
+
+<div class="controls">
+  <select id="topology">
+    <option value="bus">Bus</option>
+    <option value="ring">Ring</option>
+    <option value="star">Star</option>
+    <option value="mesh">Mesh</option>
+  </select>
+  <select id="source"></select>
+  <select id="destination"></select>
+  <button id="start">▶ Start Animation</button>
+  <button id="clear">Clear Failures</button>
+</div>
+
+<div id="message"></div>
+
+<svg id="svg" width="720" height="440"></svg>
+
+<script>
+/* ================= SETUP ================= */
+const svg = document.getElementById("svg");
+const topoSel = document.getElementById("topology");
+const srcSel = document.getElementById("source");
+const dstSel = document.getElementById("destination");
+const msg = document.getElementById("message");
+
+const computers = [
+  {id:0,x:120,y:200},
+  {id:1,x:260,y:80},
+  {id:2,x:460,y:80},
+  {id:3,x:600,y:200},
+  {id:4,x:360,y:330}
+];
+
+const hub = {x:360,y:200};
+const BUS_Y = 200;
+const failures = new Set();
+let packet = null;
+
+computers.forEach(c=>{
+  srcSel.add(new Option(`Source PC ${c.id+1}`,c.id));
+  dstSel.add(new Option(`Destination PC ${c.id+1}`,c.id));
+});
+dstSel.value = 3;
+
+/* ================= HELPERS ================= */
+function clearSVG(){ while(svg.firstChild) svg.removeChild(svg.firstChild); }
+function broken(id){ return failures.has(id); }
+function toggle(id){
+  failures.has(id)?failures.delete(id):failures.add(id);
+  render();
+}
+function drawLine(x1,y1,x2,y2,id,cls=""){
+  const l=document.createElementNS("http://www.w3.org/2000/svg","line");
+  l.setAttribute("x1",x1); l.setAttribute("y1",y1);
+  l.setAttribute("x2",x2); l.setAttribute("y2",y2);
+  l.setAttribute("class","link "+cls+(broken(id)?" broken":""));
+  l.onclick=()=>toggle(id);
+  svg.appendChild(l);
+}
+
+/* ================= PATH LOGIC ================= */
+
+/* MESH – FULL BFS (ALL POSSIBLE PATHS) */
+function getMeshPath(s,d){
+  const graph = new Map();
+  computers.forEach(c => graph.set(c.id, []));
+
+  computers.forEach(a=>{
+    computers.forEach(b=>{
+      if(a.id!==b.id && !broken(`mesh-${a.id}-${b.id}`)){
+        graph.get(a.id).push(b.id);
+      }
+    });
+  });
+
+  const queue = [[s]];
+  const visited = new Set([s]);
+
+  while(queue.length){
+    const path = queue.shift();
+    const node = path[path.length-1];
+
+    if(node===d){
+      return path.map(id=>({x:computers[id].x,y:computers[id].y}));
+    }
+
+    for(const n of graph.get(node)){
+      if(!visited.has(n)){
+        visited.add(n);
+        queue.push([...path,n]);
+      }
+    }
+  }
+  return [];
+}
+
+function getBusPath(s,d){
+  const o=[...computers].sort((a,b)=>a.x-b.x);
+  const ids=o.map(c=>c.id);
+  let i=ids.indexOf(s),j=ids.indexOf(d),step=i<j?1:-1;
+  const path=[{x:computers[s].x,y:computers[s].y},{x:computers[s].x,y:BUS_Y}];
+  while(i!==j){
+    if(broken(`bus-${ids[i]}-${ids[i+step]}`)) return [];
+    i+=step;
+    path.push({x:o[i].x,y:BUS_Y});
+  }
+  path.push({x:computers[d].x,y:computers[d].y});
+  return path;
+}
+
+function getRingPath(s,d){
+  let cur=s,path=[{x:computers[s].x,y:computers[s].y}];
+  while(cur!==d){
+    const nxt=(cur+1)%computers.length;
+    if(broken(`ring-${cur}-${nxt}`)) return [];
+    path.push({x:computers[nxt].x,y:computers[nxt].y});
+    cur=nxt;
+  }
+  return path;
+}
+
+function computePath(){
+  const s=+srcSel.value,d=+dstSel.value;
+  if(s===d) return [];
+
+  if(topoSel.value==="mesh") return getMeshPath(s,d);
+  if(topoSel.value==="bus") return getBusPath(s,d);
+  if(topoSel.value==="ring") return getRingPath(s,d);
+
+  if(topoSel.value==="star"){
+    if(broken(`star-${s}`)||broken(`star-${d}`)) return [];
+    return [
+      {x:computers[s].x,y:computers[s].y},
+      {x:hub.x,y:hub.y},
+      {x:computers[d].x,y:computers[d].y}
+    ];
+  }
+  return [];
+}
+
+/* ================= RENDER ================= */
+function render(){
+  clearSVG();
+  msg.textContent="";
+  packet=null;
+
+  const t=topoSel.value;
+
+  if(t==="ring")
+    computers.forEach((c,i)=>{
+      const n=computers[(i+1)%computers.length];
+      drawLine(c.x,c.y,n.x,n.y,`ring-${c.id}-${n.id}`);
+    });
+
+  if(t==="star"){
+    computers.forEach(c=>drawLine(hub.x,hub.y,c.x,c.y,`star-${c.id}`));
+    const h=document.createElementNS("http://www.w3.org/2000/svg","circle");
+    h.setAttribute("cx",hub.x);h.setAttribute("cy",hub.y);
+    h.setAttribute("r",10);h.setAttribute("class","hub");
+    svg.appendChild(h);
+  }
+
+  if(t==="bus"){
+    const o=[...computers].sort((a,b)=>a.x-b.x);
+    for(let i=0;i<o.length-1;i++)
+      drawLine(o[i].x,BUS_Y,o[i+1].x,BUS_Y,`bus-${o[i].id}-${o[i+1].id}`);
+    computers.forEach(c=>drawLine(c.x,BUS_Y,c.x,c.y,`bus-drop-${c.id}`));
+  }
+
+  if(t==="mesh"){
+    for(let i=0;i<computers.length;i++)
+      for(let j=i+1;j<computers.length;j++)
+        drawLine(computers[i].x,computers[i].y,
+                 computers[j].x,computers[j].y,
+                 `mesh-${computers[i].id}-${computers[j].id}`,"mesh");
+  }
+
+  computers.forEach(c=>{
+    const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
+    r.setAttribute("x",c.x-25);r.setAttribute("y",c.y-20);
+    r.setAttribute("width",50);r.setAttribute("height",40);
+    r.setAttribute("rx",6);
+    r.setAttribute("class","pc"+
+      (+srcSel.value===c.id?" source":
+       +dstSel.value===c.id?" destination":""));
+    svg.appendChild(r);
+
+    const t=document.createElementNS("http://www.w3.org/2000/svg","text");
+    t.setAttribute("x",c.x);t.setAttribute("y",c.y+5);
+    t.setAttribute("text-anchor","middle");
+    t.textContent="PC "+(c.id+1);
+    svg.appendChild(t);
+  });
+}
+
+/* ================= ANIMATION ================= */
+function startAnimation(){
+  if(packet) packet.remove();
+  const path=computePath();
+  if(path.length<2){
+    msg.textContent="❌ No available path to reach destination.";
+    return;
+  }
+
+  packet=document.createElementNS("http://www.w3.org/2000/svg","circle");
+  packet.setAttribute("r",8);
+  packet.setAttribute("class","packet");
+  svg.appendChild(packet);
+
+  let i=0;
+  function step(){
+    if(i>=path.length-1) return;
+    const A=path[i],B=path[i+1];
+
+    const ax=document.createElementNS("http://www.w3.org/2000/svg","animate");
+    ax.setAttribute("attributeName","cx");
+    ax.setAttribute("from",A.x);
+    ax.setAttribute("to",B.x);
+    ax.setAttribute("dur","1s");
+    ax.setAttribute("fill","freeze");
+
+    const ay=document.createElementNS("http://www.w3.org/2000/svg","animate");
+    ay.setAttribute("attributeName","cy");
+    ay.setAttribute("from",A.y);
+    ay.setAttribute("to",B.y);
+    ay.setAttribute("dur","1s");
+    ay.setAttribute("fill","freeze");
+
+    packet.appendChild(ax);
+    packet.appendChild(ay);
+    ax.beginElement(); ay.beginElement();
+
+    i++;
+    setTimeout(step,1000);
+  }
+  step();
+}
+
+/* ================= CONTROLS ================= */
+topoSel.onchange=render;
+srcSel.onchange=render;
+dstSel.onchange=render;
+document.getElementById("start").onclick=startAnimation;
+document.getElementById("clear").onclick=()=>{failures.clear();render();};
+
+render();
+</script>
+
+</body>
+</html>
