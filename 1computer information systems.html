@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mega-Festival CIS Blueprint Workshop</title>
+
+<style>
+:root {
+  --primary: #0056b3;
+  --secondary: #f4f4f9;
+  --radius: 8px;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: var(--secondary);
+}
+
+.container {
+  max-width: 1500px;
+  margin: auto;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+h1, h2, h3 {
+  color: var(--primary);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 20px;
+  height: 70vh;
+  margin-top: 20px;
+}
+
+.left-panel,
+.right-panel {
+  background: #f9fafb;
+  border-radius: 10px;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.panel-header {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #e5e7eb;
+  z-index: 10;
+}
+
+/* Cards */
+.card-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.card {
+  width: 200px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 2px solid #ccc;
+  background: white;
+  cursor: grab;
+  user-select: none;
+}
+
+.card:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+/* Drop Zones */
+.drop-zone {
+  border: 3px dashed #c0c0c0;
+  border-radius: var(--radius);
+  padding: 15px;
+  margin-bottom: 20px;
+  background: white;
+}
+
+.drop-zone.dragover {
+  border-color: #28a745;
+  background: #e6ffed;
+}
+
+.drop-zone-contents {
+  min-height: 120px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* Controls */
+.controls {
+  margin-top: 20px;
+  text-align: center;
+  padding-top: 15px;
+  border-top: 1px solid #ddd;
+}
+
+.controls button {
+  margin: 0 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  color: white;
+  font-size: 1em;
+}
+
+#checkAnswerBtn { background: #28a745; }
+#solveBtn { background: #2563eb; }
+#resetBtn { background: #6b7280; }
+
+#feedback {
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+/* Feedback styling */
+.correct {
+  background: #d4edda;
+  border-color: #28a745 !important;
+}
+
+.incorrect {
+  background: #f8d7da;
+  border-color: #dc3545 !important;
+}
+
+@media (max-width: 1000px) {
+  .workspace {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+
+/* ===== ENHANCED FIREWORKS ===== */
+    .firework {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    background: transparent;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    }
+
+    .firework::before {
+    content: '';
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: currentColor;
+    border-radius: 50%;
+    animation: explode 1.2s ease-out forwards;
+    }
+
+    @keyframes explode {
+    0% {
+        transform: scale(0.2);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(
+        calc(var(--x) * 1px),
+        calc(var(--y) * 1px)
+        ) scale(1);
+        opacity: 0;
+    }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>🎓 CIS Workshop: Mega-Festival Blueprint</h1>
+  <p><strong>Objective:</strong> Drag each component into the correct CIS pillar.</p>
+
+  <div class="workspace">
+
+    <!-- LEFT: CARDS -->
+    <div class="left-panel">
+      <div class="panel-header">
+        <h2>🗺️ Unallocated Concepts</h2>
+      </div>
+
+      <div class="card-area" id="source-card-area">
+        <div class="card" id="c1" draggable="true" data-component="Hardware">Fiber Optic Cables</div>
+        <div class="card" id="c2" draggable="true" data-component="Hardware">Generator Capacity</div>
+        <div class="card" id="c3" draggable="true" data-component="Hardware">Main Staging Structure</div>
+
+        <div class="card" id="c4" draggable="true" data-component="Software">Artist Scheduling App</div>
+        <div class="card" id="c5" draggable="true" data-component="Software">Ticketing Algorithm</div>
+        <div class="card" id="c6" draggable="true" data-component="Software">Crowd Flow App</div>
+
+        <div class="card" id="c7" draggable="true" data-component="Data">Attendance Logs</div>
+        <div class="card" id="c8" draggable="true" data-component="Data">Billing Data</div>
+        <div class="card" id="c9" draggable="true" data-component="Data">Crowd Density Map</div>
+
+        <div class="card" id="c10" draggable="true" data-component="Process">Medical Triage Checklist</div>
+        <div class="card" id="c11" draggable="true" data-component="Process">Waste Routing</div>
+        <div class="card" id="c12" draggable="true" data-component="Process">Soundcheck Procedure</div>
+
+        <div class="card" id="c13" draggable="true" data-component="People">Security Staff</div>
+        <div class="card" id="c14" draggable="true" data-component="People">Stage Crew</div>
+        <div class="card" id="c15" draggable="true" data-component="People">Volunteers</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PILLARS -->
+    <div class="right-panel">
+      <div class="panel-header">
+        <h2>🏛️ CIS Pillars</h2>
+      </div>
+
+      <div class="drop-zone" data-component="Hardware">
+        <h3>⚙️ Hardware</h3>
+        <div class="drop-zone-contents"></div>
+      </div>
+
+      <div class="drop-zone" data-component="Software">
+        <h3>💻 Software</h3>
+        <div class="drop-zone-contents"></div>
+      </div>
+
+      <div class="drop-zone" data-component="Data">
+        <h3>📊 Data</h3>
+        <div class="drop-zone-contents"></div>
+      </div>
+
+      <div class="drop-zone" data-component="Process">
+        <h3>✅ Process</h3>
+        <div class="drop-zone-contents"></div>
+      </div>
+
+      <div class="drop-zone" data-component="People">
+        <h3>🧑‍🤝‍🧑 People</h3>
+        <div class="drop-zone-contents"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="controls">
+    <button id="checkAnswerBtn">✅ Check</button>
+    <button id="solveBtn">🧠 Solve</button>
+    <button id="resetBtn">🔄 Reset</button>
+    <div id="feedback"></div>
+  </div>
+</div>
+
+<script>
+/* ===== Utilities ===== */
+const shuffle = arr => [...arr].sort(() => Math.random() - 0.5);
+
+const source = document.getElementById("source-card-area");
+const cards = [...document.querySelectorAll(".card")];
+const zones = document.querySelectorAll(".drop-zone");
+const feedback = document.getElementById("feedback");
+
+/* ===== Initialize / Reset ===== */
+function init() {
+  feedback.textContent = "";
+  cards.forEach(card => {
+    card.classList.remove("correct","incorrect");
+    source.appendChild(card);
+  });
+  shuffle(cards).forEach(card => source.appendChild(card));
+}
+init();
+
+/* ===== Drag & Drop (FIXED) ===== */
+cards.forEach(card => {
+  card.addEventListener("dragstart", e => {
+    e.dataTransfer.setData("id", card.id);
+    e.dataTransfer.effectAllowed = "move";
+  });
+});
+
+zones.forEach(zone => {
+  const contents = zone.querySelector(".drop-zone-contents");
+
+  zone.addEventListener("dragover", e => {
+    e.preventDefault();
+    zone.classList.add("dragover");
+  });
+
+  zone.addEventListener("dragleave", () => {
+    zone.classList.remove("dragover");
+  });
+
+  contents.addEventListener("dragover", e => {
+    e.preventDefault(); // critical
+  });
+
+  contents.addEventListener("drop", e => {
+    e.preventDefault();
+    zone.classList.remove("dragover");
+    const card = document.getElementById(e.dataTransfer.getData("id"));
+    if (card) contents.appendChild(card);
+  });
+});
+
+/* ===== Check ===== */
+document.getElementById("checkAnswerBtn").onclick = () => {
+  let correct = 0;
+
+  cards.forEach(card => {
+    card.classList.remove("correct", "incorrect");
+    const zone = card.closest(".drop-zone");
+
+    if (zone && zone.dataset.component === card.dataset.component) {
+      card.classList.add("correct");
+      correct++;
+    } else {
+      card.classList.add("incorrect");
+    }
+  });
+
+  if (correct === cards.length) {
+    feedback.textContent =
+      "🎉 CONGRATULATIONS! Perfect Blueprint — every CIS component is correctly aligned.";
+    launchFireworks(3000);
+  } else {
+    feedback.textContent =
+      `✅ ${correct}/${cards.length} correct. Review highlighted cards and try again.`;
+  }
+};
+
+
+
+/* ===== Solve ===== */
+document.getElementById("solveBtn").onclick = () => {
+  cards.forEach(card => {
+    const target = document.querySelector(
+      `.drop-zone[data-component="${card.dataset.component}"] .drop-zone-contents`
+    );
+    target.appendChild(card);
+    card.classList.remove("incorrect");
+    card.classList.add("correct");
+  });
+  feedback.textContent = "🧠 Blueprint solved. Review system dependencies.";
+};
+
+/* ===== Reset ===== */
+document.getElementById("resetBtn").onclick = init;
+
+function launchFireworks(duration = 3000) {
+  const colors = [
+    '#ff4d4f', // red
+    '#ff922b', // orange
+    '#ffd43b', // yellow
+    '#40c057', // green
+    '#20c997', // teal
+    '#339af0', // blue
+    '#5c7cfa', // indigo
+    '#845ef7', // purple
+    '#f06595', // pink
+    '#ffffff'  // white sparkle
+  ];
+
+  const particlesPerBurst = 20;
+  const interval = setInterval(() => {
+
+    // Multiple bursts at once
+    for (let b = 0; b < 3; b++) {
+      const originX = Math.random() * window.innerWidth;
+      const originY = Math.random() * window.innerHeight * 0.7; // keep fireworks higher
+
+      for (let i = 0; i < particlesPerBurst; i++) {
+        const fw = document.createElement('div');
+        fw.className = 'firework';
+        fw.style.left = originX + 'px';
+        fw.style.top = originY + 'px';
+        fw.style.color =
+          colors[Math.floor(Math.random() * colors.length)];
+
+        const angle = Math.random() * Math.PI * 2;
+        const distance = Math.random() * 250 + 80;
+
+        fw.style.setProperty('--x', Math.cos(angle) * distance);
+        fw.style.setProperty('--y', Math.sin(angle) * distance);
+
+        document.body.appendChild(fw);
+        setTimeout(() => fw.remove(), 1300);
+      }
+    }
+
+  }, 180);
+
+  setTimeout(() => clearInterval(interval), duration);
+}
+</script>
+
+</body>
+</html>
