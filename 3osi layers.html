@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OSI Model – Devices & Drag-and-Drop Activity</title>
+
+<style>
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background:#f8fafc;
+  padding:20px;
+  color:#1e293b;
+}
+
+h1, h2 { text-align:center; }
+
+/* Table */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto 30px auto;
+}
+th, td {
+  border:1px solid #cbd5e1;
+  padding:8px 10px;
+}
+th { background:#e2e8f0; }
+.layer-num { text-align:center; font-weight:bold; }
+
+/* Activity */
+.activity { max-width: 1100px; margin: auto; }
+
+.layers {
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap:10px;
+  margin-bottom:25px;
+}
+
+.layer-box {
+  background:#f1f5f9;
+  border:2px dashed #94a3b8;
+  border-radius:8px;
+  padding:10px;
+  min-height:110px;
+}
+
+.layer-box h3 {
+  margin:0 0 5px 0;
+  font-size:14px;
+  text-align:center;
+}
+
+/* Devices */
+.devices {
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  justify-content:center;
+}
+
+.device {
+  padding:5px 9px;
+  background:#dbeafe;
+  border:1px solid #1e3a8a;
+  border-radius:6px;
+  cursor:grab;
+  font-size:12px;
+  user-select:none;
+}
+
+.correct {
+  background:#bbf7d0 !important;
+  border-color:#166534 !important;
+}
+
+.incorrect {
+  background:#fecaca !important;
+  border-color:#991b1b !important;
+}
+
+/* Controls */
+.controls {
+  text-align:center;
+  margin-top:25px;
+}
+
+.controls button {
+  margin: 0 6px;
+  padding:10px 18px;
+  font-size:15px;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  color:white;
+}
+
+#checkBtn { background:#2563eb; }
+#solveBtn { background:#16a34a; }
+#resetBtn { background:#6b7280; }
+
+/* Thumbs-up celebration */
+.thumb-overlay {
+  position:fixed;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  pointer-events:none;
+  z-index:9999;
+}
+
+.thumb {
+  font-size:120px;
+  opacity:0;
+  animation:thumbPop 2s ease-out forwards;
+}
+
+@keyframes thumbPop {
+  0%   { transform:scale(0.6); opacity:0; }
+  25%  { opacity:1; }
+  60%  { transform:scale(1.3); opacity:1; }
+  100% { transform:scale(1.5); opacity:0; }
+}
+</style>
+</head>
+
+<body>
+
+<h1>OSI Layer Model</h1>
+
+<table>
+<thead>
+<tr>
+<th>Layer</th><th>Name</th><th>What It Does</th><th>Typical Devices / Components</th>
+</tr>
+</thead>
+<tbody>
+<tr><td class="layer-num">7</td><td>Application</td><td>User-facing network services</td><td>Browser, Email Client</td></tr>
+<tr><td class="layer-num">6</td><td>Presentation</td><td>Formatting, encryption</td><td>SSL/TLS, Compression</td></tr>
+<tr><td class="layer-num">5</td><td>Session</td><td>Session control</td><td>Session Manager</td></tr>
+<tr><td class="layer-num">4</td><td>Transport</td><td>Reliable delivery</td><td>TCP, UDP</td></tr>
+<tr><td class="layer-num">3</td><td>Network</td><td>Routing</td><td>Router</td></tr>
+<tr><td class="layer-num">2</td><td>Data Link</td><td>Frame delivery</td><td>Switch, NIC</td></tr>
+<tr><td class="layer-num">1</td><td>Physical</td><td>Raw bits</td><td>Cables, Hub</td></tr>
+</tbody>
+</table>
+
+<h2>Drag & Drop Activity – Match Devices to OSI Layer</h2>
+
+<div class="activity">
+
+<div class="layers">
+  <div class="layer-box" data-layer="7"><h3>Layer 7<br>Application</h3></div>
+  <div class="layer-box" data-layer="6"><h3>Layer 6<br>Presentation</h3></div>
+  <div class="layer-box" data-layer="5"><h3>Layer 5<br>Session</h3></div>
+  <div class="layer-box" data-layer="4"><h3>Layer 4<br>Transport</h3></div>
+  <div class="layer-box" data-layer="3"><h3>Layer 3<br>Network</h3></div>
+  <div class="layer-box" data-layer="2"><h3>Layer 2<br>Data Link</h3></div>
+  <div class="layer-box" data-layer="1"><h3>Layer 1<br>Physical</h3></div>
+</div>
+
+<div class="devices" id="devicePool">
+  <div class="device" draggable="true" data-answer="7">Mozilla Firefox</div>
+  <div class="device" draggable="true" data-answer="7">Outlook Email Client</div>
+  <div class="device" draggable="true" data-answer="6">Encryption (TLS)</div>
+  <div class="device" draggable="true" data-answer="6">Compression</div>
+  <div class="device" draggable="true" data-answer="5">Session Manager</div>
+  <div class="device" draggable="true" data-answer="5">NetBIOS Session</div>
+  <div class="device" draggable="true" data-answer="4">TCP</div>
+  <div class="device" draggable="true" data-answer="4">UDP</div>
+  <div class="device" draggable="true" data-answer="3">Router</div>
+  <div class="device" draggable="true" data-answer="3">Layer‑3 Switch</div>
+  <div class="device" draggable="true" data-answer="2">Switch</div>
+  <div class="device" draggable="true" data-answer="2">Bridge</div>
+  <div class="device" draggable="true" data-answer="2">NIC</div>
+  <div class="device" draggable="true" data-answer="1">Hub</div>
+  <div class="device" draggable="true" data-answer="1">Repeater</div>
+  <div class="device" draggable="true" data-answer="1">Ethernet Cable</div>
+</div>
+
+</div>
+
+<div class="controls">
+  <button id="checkBtn">✅ Check</button>
+  <button id="solveBtn">🧠 Solve</button>
+  <button id="resetBtn">🔄 Reset</button>
+</div>
+
+<script>
+let draggedItem = null;
+const devices = [...document.querySelectorAll('.device')];
+const pool = document.getElementById('devicePool');
+const layers = document.querySelectorAll('.layer-box');
+
+devices.forEach(d => {
+  d.addEventListener('dragstart', () => draggedItem = d);
+});
+
+layers.forEach(box => {
+  box.addEventListener('dragover', e => e.preventDefault());
+  box.addEventListener('drop', () => {
+    if (!draggedItem) return;
+    box.appendChild(draggedItem);
+    draggedItem = null;
+  });
+});
+
+/* CHECK */
+document.getElementById('checkBtn').onclick = () => {
+  let correct = 0;
+  devices.forEach(d => {
+    d.classList.remove('correct','incorrect');
+    const box = d.closest('.layer-box');
+    if (box && box.dataset.layer === d.dataset.answer) {
+      d.classList.add('correct');
+      correct++;
+    } else {
+      d.classList.add('incorrect');
+    }
+  });
+
+  if (correct === devices.length) showThumbsUp();
+};
+
+/* SOLVE */
+document.getElementById('solveBtn').onclick = () => {
+  devices.forEach(d => {
+    document
+      .querySelector(`.layer-box[data-layer="${d.dataset.answer}"]`)
+      .appendChild(d);
+    d.classList.add('correct');
+  });
+};
+
+/* RESET */
+document.getElementById('resetBtn').onclick = () => {
+  devices.forEach(d => {
+    d.classList.remove('correct','incorrect');
+    pool.appendChild(d);
+  });
+};
+
+/* THUMBS UP */
+function showThumbsUp() {
+  const overlay = document.createElement('div');
+  overlay.className = 'thumb-overlay';
+  overlay.innerHTML = `<div class="thumb">👍</div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => overlay.remove(), 2000);
+}
+</script>
+
+</body>
+</html>
