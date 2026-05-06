@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Motherboard Component Matching Workshop</title>
+
+<style>
+/* ===== CORE STYLES ===== */
+:root {
+  --primary: #2980b9;
+  --secondary: #ecf0f1;
+  --radius: 8px;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: var(--secondary);
+  color: #333;
+  margin: 0;
+  padding: 20px;
+}
+
+.container {
+  max-width: 1400px;
+  margin: auto;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+}
+
+h1, h2, h3 {
+  color: var(--primary);
+  margin-top: 0;
+}
+
+/* ===== LAYOUT ===== */
+.main-content {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 24px;
+  margin-top: 20px;
+  height: 65vh;
+}
+
+.panel {
+  background: #f9fafb;
+  padding: 15px;
+  border-radius: 10px;
+  overflow-y: auto;
+}
+
+.panel h2 {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+  z-index: 10;
+}
+
+/* ===== CARDS ===== */
+.card-area {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.card {
+  cursor: grab;
+  background-color: #fff;
+  border: 2px solid #ccc;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  width: 180px;
+  font-size: 0.9rem;
+  user-select: none;
+}
+
+.card:active {
+  cursor: grabbing;
+  opacity: 0.7;
+}
+
+/* ===== DROP ZONES ===== */
+.drop-zone {
+  padding: 15px;
+  border: 3px dashed #c0c0c0;
+  border-radius: var(--radius);
+  background-color: #ffffff;
+  margin-bottom: 18px;
+}
+
+.drop-zone.dragover {
+  border-color: #2ecc71;
+  background-color: #e6ffe6;
+}
+
+.drop-zone-contents {
+  min-height: 80px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ===== CONTROLS ===== */
+.controls {
+  text-align: center;
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.controls button {
+  margin: 0 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+#checkAnswerBtn { background-color: #27ae60; }
+#solveBtn { background-color: #2563eb; }
+#resetBtn { background-color: #6b7280; }
+
+#feedback {
+  margin-top: 15px;
+  font-weight: bold;
+}
+
+/* ===== FEEDBACK STATES ===== */
+.correct {
+  background-color: #d4edda;
+  border-color: #28a745 !important;
+}
+
+.incorrect {
+  background-color: #f8d7da;
+  border-color: #dc3545 !important;
+}
+
+/* ===== FIREWORKS ===== */
+.firework {
+  position: fixed;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.firework::before {
+  content: '';
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: explode 1.2s ease-out forwards;
+}
+
+@keyframes explode {
+  from { opacity: 1; transform: scale(0.2); }
+  to {
+    opacity: 0;
+    transform: translate(
+      calc(var(--x) * 1px),
+      calc(var(--y) * 1px)
+    );
+  }
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .main-content {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<header>
+<h1>🧠 Motherboard Component Match‑Up Workshop</h1>
+<p><strong>Objective:</strong> Match each motherboard component to its correct function.</p>
+</header>
+
+<div class="main-content">
+
+<!-- LEFT: COMPONENT CARDS -->
+<div class="panel">
+  <h2>🏷️ Component Cards</h2>
+  <div class="card-area" id="source-card-area">
+    <div class="card" draggable="true" data-component="CPU">AMD Ryzen 7000</div>
+    <div class="card" draggable="true" data-component="CPU">Intel i5 13th Gen</div>
+    <div class="card" draggable="true" data-component="RAM">Corsair 16GB DIMM</div>
+    <div class="card" draggable="true" data-component="RAM">Micron 8GB DIMM</div>
+    <div class="card" draggable="true" data-component="M.2">1TB NVMe Storage</div>
+    <div class="card" draggable="true" data-component="GPU">NVIDIA RTX 3050</div>
+    <div class="card" draggable="true" data-component="GPU">AMD Radeon RX9060</div>
+    <div class="card" draggable="true" data-component="BUS">PCI Expansion Bus</div>
+    <div class="card" draggable="true" data-component="Power Connector">700W Power Connector</div>
+  </div>
+</div>
+
+<!-- RIGHT: PURPOSES -->
+<div class="panel">
+  <h2>💡 Component Purpose</h2>
+
+  <div class="drop-zone" data-component="CPU">
+    <h3>CPU</h3>
+    <p>The computer’s brain, performing calculations and instruction execution.</p>
+    <div class="drop-zone-contents"></div>
+  </div>
+
+  <div class="drop-zone" data-component="RAM">
+    <h3>RAM</h3>
+    <p>Temporary high‑speed memory for actively used data.</p>
+    <div class="drop-zone-contents"></div>
+  </div>
+
+  <div class="drop-zone" data-component="M.2">
+    <h3>M.2 Slot</h3>
+    <p>High‑speed interface for NVMe solid‑state drives.</p>
+    <div class="drop-zone-contents"></div>
+  </div>
+
+  <div class="drop-zone" data-component="GPU">
+    <h3>GPU</h3>
+    <p>Processes graphics and accelerates visual workloads.</p>
+    <div class="drop-zone-contents"></div>
+  </div>
+
+  <div class="drop-zone" data-component="BUS">
+    <h3>Expansion Bus</h3>
+    <p>Communication pathways between system components.</p>
+    <div class="drop-zone-contents"></div>
+  </div>
+
+  <div class="drop-zone" data-component="Power Connector">
+    <h3>Main Power Connector</h3>
+    <p>Supplies electrical power from the PSU.</p>
+    <div class="drop-zone-contents"></div>
+  </div>
+</div>
+
+</div>
+
+<div class="controls">
+  <button id="checkAnswerBtn">✅ Check</button>
+  <button id="solveBtn">🧠 Solve</button>
+  <button id="resetBtn">🔄 Reset</button>
+  <div id="feedback"></div>
+</div>
+
+</div>
+
+<script>
+/* ===== UTILITIES ===== */
+const cards = [...document.querySelectorAll('.card')];
+const source = document.getElementById('source-card-area');
+const zones = document.querySelectorAll('.drop-zone');
+const feedback = document.getElementById('feedback');
+
+const shuffle = a => [...a].sort(() => Math.random() - 0.5);
+
+/* ===== INIT / RESET ===== */
+function init() {
+  feedback.textContent = '';
+  cards.forEach(c => {
+    c.classList.remove('correct','incorrect');
+    source.appendChild(c);
+  });
+  shuffle(cards).forEach(c => source.appendChild(c));
+}
+init();
+
+/* ===== DRAG & DROP ===== */
+cards.forEach(c => {
+  c.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('idx', cards.indexOf(c));
+  });
+});
+
+zones.forEach(zone => {
+  const contents = zone.querySelector('.drop-zone-contents');
+
+  zone.addEventListener('dragover', e => {
+    e.preventDefault();
+    zone.classList.add('dragover');
+  });
+
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  contents.addEventListener('dragover', e => e.preventDefault());
+
+  contents.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    contents.appendChild(cards[e.dataTransfer.getData('idx')]);
+  });
+});
+
+/* ===== FIREWORKS ===== */
+function launchFireworks(ms = 3000) {
+  const colors = ['#ff4d4f','#ffd43b','#40c057','#339af0','#845ef7','#f06595','#fff'];
+  const interval = setInterval(() => {
+    for (let i = 0; i < 25; i++) {
+      const fw = document.createElement('div');
+      fw.className = 'firework';
+      fw.style.color = colors[Math.floor(Math.random() * colors.length)];
+      fw.style.left = Math.random() * innerWidth + 'px';
+      fw.style.top = Math.random() * innerHeight * 0.6 + 'px';
+      fw.style.setProperty('--x', (Math.random() - 0.5) * 250);
+      fw.style.setProperty('--y', (Math.random() - 0.5) * 250);
+      document.body.appendChild(fw);
+      setTimeout(() => fw.remove(), 1200);
+    }
+  }, 180);
+  setTimeout(() => clearInterval(interval), ms);
+}
+
+/* ===== CHECK ===== */
+document.getElementById('checkAnswerBtn').onclick = () => {
+  let correct = 0;
+
+  cards.forEach(c => {
+    c.classList.remove('correct','incorrect');
+    const z = c.closest('.drop-zone');
+
+    if (z && z.dataset.component === c.dataset.component) {
+      c.classList.add('correct');
+      correct++;
+    } else {
+      c.classList.add('incorrect');
+    }
+  });
+
+  if (correct === cards.length) {
+    feedback.textContent = '🎉 PERFECT MATCH! All motherboard components are correctly identified.';
+    launchFireworks();
+  } else {
+    feedback.textContent = `✅ ${correct}/${cards.length} correct. Review the highlighted mismatches.`;
+  }
+};
+
+/* ===== SOLVE ===== */
+document.getElementById('solveBtn').onclick = () => {
+  cards.forEach(c => {
+    document
+      .querySelector(`.drop-zone[data-component="${c.dataset.component}"] .drop-zone-contents`)
+      .appendChild(c);
+    c.classList.add('correct');
+  });
+  feedback.textContent = '🧠 All components correctly matched. Review their functions.';
+};
+
+/* ===== RESET ===== */
+document.getElementById('resetBtn').onclick = init;
+</script>
+
+</body>
+</html>
