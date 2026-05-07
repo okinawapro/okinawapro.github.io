@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>When Information Is Instant</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f6f7fb;
+      color: #1f2937;
+      margin: 0;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 900px;
+    }
+
+    h1 {
+      font-size: 2.2em;
+      margin-bottom: 20px;
+    }
+
+    .prompt,
+    .challenge,
+    .think-pair {
+      font-size: 1.25em;
+      margin-top: 30px;
+    }
+
+    .poll-buttons {
+      margin-top: 30px;
+    }
+
+    .poll-buttons button {
+      font-size: 1em;
+      padding: 12px 20px;
+      margin-right: 10px;
+      margin-top: 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    .poll-buttons button:hover {
+      background-color: #2563eb;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .dots {
+      font-size: 1.5em;
+      margin-top: 15px;
+      height: 1.5em;
+      letter-spacing: 4px;
+    }
+
+    /* Final message overlay */
+    .final-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 2.5s ease;
+    }
+
+    .final-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .final-message {
+      background: #fefce8;
+      padding: 40px 50px;
+      border-radius: 10px;
+      font-size: 2em;
+      font-weight: bold;
+      text-align: center;
+      max-width: 800px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>When Information Is Instant, Why Should People (🫵 You) Need to Learn?</h1>
+
+  <div class="prompt">
+    If all information is instantly available, do people still need to learn or memorize anything?
+  </div>
+
+  <div class="poll-buttons">
+    <button onclick="startDiscussion()">✅ Yes, learning is still critical</button>
+    <button onclick="startDiscussion()">⚠️ Maybe, but less than before</button>
+    <button onclick="startDiscussion()">❌ No, we can just look it up</button>
+  </div>
+
+  <div id="challenge" class="challenge hidden">
+    If you can get answers instantly… how do you know they’re correct, useful, or safe?
+  </div>
+
+  <div id="dots1" class="dots hidden"></div>
+
+  <div id="thinkPair" class="think-pair hidden">
+    What must you know already <em>before</em> using search or AI effectively?
+  </div>
+
+  <div id="dots2" class="dots hidden"></div>
+</div>
+
+<!-- Final message overlay -->
+<div id="finalOverlay" class="final-overlay">
+  <div class="final-message">
+    Instant access to information doesn’t eliminate the need to learn.<br><br>
+    It <strong>raises the cost of not understanding</strong>, because without thinking skills,
+    you cannot detect mistakes, judge consequences, or act responsibly.
+  </div>
+</div>
+
+<script>
+  let dotInterval;
+
+  function startDots(elementId) {
+    const el = document.getElementById(elementId);
+    el.textContent = "";
+    el.classList.remove("hidden");
+    let count = 0;
+
+    dotInterval = setInterval(() => {
+      count++;
+      el.textContent += ".";
+    }, 1000);
+  }
+
+  function stopDots() {
+    clearInterval(dotInterval);
+  }
+
+  function startDiscussion() {
+    // Show challenge immediately
+    document.getElementById("challenge").classList.remove("hidden");
+
+    // First dots (10 seconds)
+    startDots("dots1");
+
+    setTimeout(() => {
+      stopDots();
+      document.getElementById("dots1").classList.add("hidden");
+      document.getElementById("thinkPair").classList.remove("hidden");
+
+      // Second dots (20 seconds)
+      startDots("dots2");
+    }, 10000);
+
+    // Final reveal after total 30 seconds
+    setTimeout(() => {
+      stopDots();
+      document.getElementById("dots2").classList.add("hidden");
+      document.getElementById("finalOverlay").classList.add("show");
+    }, 30000);
+  }
+</script>
+
+</body>
+</html>
