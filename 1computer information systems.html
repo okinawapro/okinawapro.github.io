@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CIS Workshop – Restaurant System Analogy</title>
+<style>
+body{
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background:#f4f4f9;
+  padding:20px;
+}
+.container{
+  max-width:1500px;
+  margin:auto;
+  background:white;
+  padding:20px;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.1);
+}
+h1,h2,h3{color:#2563eb}
+.workspace{
+  display:grid;
+  grid-template-columns:1fr 1.4fr;
+  gap:20px;
+  height:70vh;
+}
+.left-panel,.right-panel{
+  background:#f9fafb;
+  border-radius:10px;
+  padding:15px;
+  overflow:auto;
+}
+.panel-header{
+  position:sticky;
+  top:0;
+  background:#f9fafb;
+  border-bottom:2px solid #e5e7eb;
+  margin-bottom:10px;
+}
+.card-area{display:flex;flex-wrap:wrap;gap:12px}
+.card{
+  width:200px;
+  padding:12px;
+  border-radius:8px;
+  border:2px solid #ccc;
+  background:white;
+  cursor:grab;
+}
+.card:active{cursor:grabbing;opacity:0.7}
+.drop-zone{
+  border:3px dashed #c0c0c0;
+  border-radius:8px;
+  padding:12px;
+  margin-bottom:15px;
+  background:white;
+}
+.drop-zone.dragover{border-color:#22c55e;background:#ecfdf5}
+.drop-zone-contents{min-height:100px;display:flex;flex-wrap:wrap;gap:8px}
+.controls{text-align:center;margin-top:15px}
+.controls button{
+  margin:6px;
+  padding:12px 22px;
+  border:none;
+  border-radius:8px;
+  color:white;
+  cursor:pointer;
+}
+#check{background:#22c55e}
+#solve{background:#2563eb}
+#reset{background:#6b7280}
+#hintBtn{background:#f59e0b}
+.correct{background:#dcfce7;border-color:#22c55e}
+.incorrect{background:#fee2e2;border-color:#dc2626}
+#feedback{margin-top:10px;font-weight:bold}
+
+/* Modal */
+.modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.6);
+  z-index:999;
+}
+.modal-content{
+  background:white;
+  padding:25px;
+  border-radius:12px;
+  max-width:600px;
+  margin:10% auto;
+}
+.modal-content h3{margin-top:0}
+.modal-content button{
+  background:#2563eb;
+  border:none;
+  color:white;
+  padding:10px 16px;
+  border-radius:6px;
+  cursor:pointer;
+}
+@media(max-width:1000px){.workspace{grid-template-columns:1fr;height:auto}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>🍽️ CIS Workshop: Restaurant Information System</h1>
+<p><strong>Objective:</strong> Categorize restaurant components using the 5 parts of a Computer Information System.</p>
+
+<div class="workspace">
+<div class="left-panel">
+  <div class="panel-header"><h2>📦 Unsorted Items</h2></div>
+  <div class="card-area" id="source">
+    <div class="card" draggable="true" data-component="People">Chefs</div>
+    <div class="card" draggable="true" data-component="People">Servers/Waiters</div>
+    <div class="card" draggable="true" data-component="People">Restaurant Manager</div>
+    <div class="card" draggable="true" data-component="Process">Order Preparation Steps</div>
+    <div class="card" draggable="true" data-component="Process">Food Safety Procedures</div>
+    <div class="card" draggable="true" data-component="Process">Ingredient Re‑stocking Routine</div>
+    <div class="card" draggable="true" data-component="Hardware">Ovens & Grills</div>
+    <div class="card" draggable="true" data-component="Hardware">Cash Registers</div>
+    <div class="card" draggable="true" data-component="Hardware">Refrigerators</div>
+    <div class="card" draggable="true" data-component="Software">Point‑of‑Sale (POS) System</div>
+    <div class="card" draggable="true" data-component="Software">Online Ordering App</div>
+    <div class="card" draggable="true" data-component="Software">Inventory Software</div>
+    <div class="card" draggable="true" data-component="Data">Customer's Order</div>
+    <div class="card" draggable="true" data-component="Data">Sales Reports</div>
+    <div class="card" draggable="true" data-component="Data">Inventory Levels</div>
+  </div>
+</div>
+
+<div class="right-panel">
+  <div class="panel-header"><h2>🏛️ CIS Components</h2></div>
+  <div class="drop-zone" data-component="People"><h3>🧑‍🤝‍🧑 People</h3><div class="drop-zone-contents"></div></div>
+  <div class="drop-zone" data-component="Process"><h3>✅ Processes</h3><div class="drop-zone-contents"></div></div>
+  <div class="drop-zone" data-component="Hardware"><h3>⚙️ Hardware</h3><div class="drop-zone-contents"></div></div>
+  <div class="drop-zone" data-component="Software"><h3>💻 Software</h3><div class="drop-zone-contents"></div></div>
+  <div class="drop-zone" data-component="Data"><h3>📊 Data</h3><div class="drop-zone-contents"></div></div>
+</div>
+</div>
+
+<div class="controls">
+  <button id="check">✅ Check</button>
+  <button id="solve">🧠 Solve</button>
+  <button id="reset">🔄 Reset</button>
+  <button id="hintBtn">💡 Hints</button>
+  <div id="feedback"></div>
+</div>
+</div>
+
+<!-- HINT MODAL -->
+<div class="modal" id="hintModal">
+  <div class="modal-content">
+    <h3>💡 Build the System</h3>
+    <p><strong>Start with People only</strong><br>“Who is involved?”</p>
+    <p><strong>Add Processes</strong><br>“What steps do they follow?”</p>
+    <p><strong>Add Hardware</strong><br>“What tools do they need?”</p>
+    <p><strong>Add Software</strong><br>“What helps tools work together?”</p>
+    <p><strong>Add Data</strong><br>“What information flows through everything?”</p>
+    <button onclick="closeHints()">Close</button>
+  </div>
+</div>
+
+<script>
+const cards=[...document.querySelectorAll('.card')];
+const zones=document.querySelectorAll('.drop-zone');
+const source=document.getElementById('source');
+const feedback=document.getElementById('feedback');
+
+function shuffle(a){return [...a].sort(()=>Math.random()-0.5)}
+function reset(){
+ feedback.textContent='';
+ cards.forEach(c=>{c.classList.remove('correct','incorrect');source.appendChild(c)});
+ shuffle(cards).forEach(c=>source.appendChild(c));
+}
+reset();
+
+cards.forEach(c=>{
+ c.addEventListener('dragstart',e=>e.dataTransfer.setData('id',c.textContent));
+});
+
+zones.forEach(z=>{
+ const box=z.querySelector('.drop-zone-contents');
+ z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('dragover')});
+ z.addEventListener('dragleave',()=>z.classList.remove('dragover'));
+ box.addEventListener('dragover',e=>e.preventDefault());
+ box.addEventListener('drop',e=>{
+   e.preventDefault();z.classList.remove('dragover');
+   const card=cards.find(c=>c.textContent===e.dataTransfer.getData('id'));
+   if(card) box.appendChild(card);
+ });
+});
+
+check.onclick=()=>{
+ let correct=0;
+ cards.forEach(c=>{
+   c.classList.remove('correct','incorrect');
+   const z=c.closest('.drop-zone');
+   if(z&&z.dataset.component===c.dataset.component){c.classList.add('correct');correct++;}
+   else{c.classList.add('incorrect');}
+ });
+ feedback.textContent=`${correct}/${cards.length} correct. Review and try again.`;
+ if(correct===cards.length) feedback.textContent='🎉 Perfect system build!';
+};
+
+solve.onclick=()=>{
+ cards.forEach(c=>{
+   document.querySelector(`.drop-zone[data-component="${c.dataset.component}"] .drop-zone-contents`).appendChild(c);
+   c.classList.add('correct');c.classList.remove('incorrect');
+ });
+ feedback.textContent='🧠 Review the completed restaurant system.';
+};
+
+resetBtn=reset;
+
+hintBtn.onclick=()=>document.getElementById('hintModal').style.display='block';
+function closeHints(){document.getElementById('hintModal').style.display='none'}
+</script>
+</body>
+</html>
