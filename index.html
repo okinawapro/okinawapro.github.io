@@ -112,7 +112,9 @@ fetch(apiUrl)
     htmlFiles.forEach(file => {
       const li = document.createElement("li");
       const a = document.createElement("a");
-      a.href = file;
+      a.href = file;   
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
       a.textContent = file.replace(".html", "").replace(/[-_]/g, " ");
       li.appendChild(a);
       listEl.appendChild(li);
