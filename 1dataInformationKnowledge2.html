@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DIK Interactive Menu – Data → Information → Knowledge Flow</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f6f7fb;padding:16px}
+h1,h2{color:#1f2937;margin:8px 0}
+.controls{margin-bottom:12px}
+button,select{padding:8px 12px;border:none;border-radius:6px;background:#2563eb;color:#fff;font-size:0.9rem;cursor:pointer;margin-right:6px}
+button.secondary{background:#6b7280}
+button.knowledge{background:#7c3aed}
+select{background:#0ea5e9}
+
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card{background:#fff;border-radius:10px;padding:10px}
+
+table{width:100%;border-collapse:collapse;font-size:0.9rem}
+th,td{border:1px solid #d1d5db;padding:6px;text-align:center}
+th{background:#e5e7eb}
+.good{background:#d1fae5}
+.bad{background:#fee2e2}
+.pending{opacity:0.6}
+
+#storyBox{background:#fff7ed;border:2px solid #fb923c;padding:8px;border-radius:8px;margin-bottom:6px;font-weight:bold;font-size:0.9rem}
+canvas{background:#fff;border:1px solid #ccc;margin-top:12px}
+
+.lesson{background:#eef2ff;border-left:6px solid #6366f1;padding:14px;border-radius:10px;margin-top:20px;font-size:0.95rem;line-height:1.5}
+
+/* Modal */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000}
+.modal-content{background:#fff;border-radius:10px;padding:25px;max-width:400px;margin:20% auto;text-align:center;font-size:1.1rem}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<h1>📊 Data → Information → Knowledge (Explicit Decision Step)</h1>
+<p style="margin-top:4px">The system only makes decisions <strong>after</strong> analyzing information.</p>
+
+<div class="controls">
+  <strong>Remove if below top by:</strong>
+  <select id="marginSelect" onchange="recalculate()">
+    <option value="10">10%</option>
+    <option value="20" selected>20%</option>
+    <option value="30">30%</option>
+    <option value="40">40%</option>
+    <option value="50">50%</option>
+  </select>
+  <button onclick="runScenario()">⚠️ Supply Shock</button>
+  <button class="secondary" onclick="resetAll()">🔄 Reset</button>
+</div>
+
+<div class="layout">
+  <div class="card">
+    <h2>1️⃣ DATA</h2>
+    <div id="storyBox">No active disruptions.</div>
+    <table id="ingredientTable">
+      <tr><th>Ingredient</th><th>$ / kg</th></tr>
+      <tr><td>Chicken Breast</td><td><input type="number" value="5.2"></td></tr>
+      <tr><td>Beef</td><td><input type="number" value="7.8"></td></tr>
+      <tr><td>Pork</td><td><input type="number" value="6.1"></td></tr>
+      <tr><td>Salmon</td><td><input type="number" value="9.2"></td></tr>
+      <tr><td>Rice</td><td><input type="number" value="1.1"></td></tr>
+      <tr><td>Pasta</td><td><input type="number" value="1.3"></td></tr>
+      <tr><td>Vegetables</td><td><input type="number" value="2.4"></td></tr>
+      <tr><td>Fruits</td><td><input type="number" value="3.1"></td></tr>
+      <tr><td>Cheese</td><td><input type="number" value="4.8"></td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>2️⃣ INFORMATION</h2>
+    <table id="analysisTable"></table>
+    <div style="text-align:center;margin-top:8px">
+      <button class="knowledge" onclick="gainKnowledge()">🧠 Derive Knowledge</button>
+    </div>
+  </div>
+</div>
+
+<canvas id="chart" width="900" height="320"></canvas>
+
+<div class="lesson">
+  <strong>✅ Lessons Learned:</strong><br><br>
+  This activity demonstrates that <em>data alone does not create decisions</em>. Raw ingredient prices (Data) must first be organized and analyzed to calculate profits (Information). Only after this information is interpreted—by applying a business rule or management threshold—can a meaningful decision be made (Knowledge).
+  <br><br>
+  Notice that changes in data do not automatically change actions. A deliberate step is required to interpret information and derive knowledge. This mirrors how real organizations operate: systems support decision-making, but people (or defined rules) are ultimately responsible for turning information into action.
+</div>
+
+<!-- Modal -->
+<div class="modal" id="thinkingModal">
+  <div class="modal-content">🔎 Analyzing information...</div>
+</div>
+
+<script>
+const basePrices={
+ 'Chicken Breast':5.2,'Beef':7.8,'Pork':6.1,'Salmon':9.2,
+ 'Rice':1.1,'Pasta':1.3,'Vegetables':2.4,'Fruits':3.1,'Cheese':4.8
+};
+
+const orders={
+ 'Grilled Chicken Bowl':180,
+ 'Beef Stir Fry':160,
+ 'Pasta Alfredo':75,
+ 'Salmon Plate':120,
+ 'Fruit Veggie Bowl':140
+};
+
+const recipes=[
+ {n:'Grilled Chicken Bowl',b:7.5,s:18,k:['Chicken Breast','Vegetables']},
+ {n:'Beef Stir Fry',b:9,s:21,k:['Beef','Vegetables']},
+ {n:'Pasta Alfredo',b:6,s:16,k:['Cheese']},
+ {n:'Salmon Plate',b:10,s:24,k:['Salmon','Vegetables']},
+ {n:'Fruit Veggie Bowl',b:5,s:14,k:['Fruits','Vegetables']}
+];
+
+const scenarios=[
+ {story:'Typhoon hits the island: fruits and vegetables triple.',affects:['Fruits','Vegetables'],mult:3},
+ {story:'Fuel prices surge: all meat products triple.',affects:['Chicken Breast','Beef','Pork','Salmon'],mult:3},
+ {story:'Livestock disease outbreak impacts meat supply.',affects:['Beef','Pork','Chicken Breast'],mult:3},
+ {story:'Trade dispute disrupts imports: salmon and cheese spike.',affects:['Salmon','Cheese'],mult:3},
+ {story:'Record harvest: grains and vegetables cheaper.',affects:['Rice','Pasta','Vegetables'],mult:0.5}
+];
+
+let resultsCache=[];
+
+function getPrices(){
+ const rows=document.querySelectorAll('#ingredientTable tr');
+ let p={};
+ for(let i=1;i<rows.length;i++){p[rows[i].cells[0].innerText]=parseFloat(rows[i].cells[1].children[0].value)}
+ return p;
+}
+
+function recalculate(){
+ const prices=getPrices();
+ const table=document.getElementById('analysisTable');
+ table.innerHTML='<tr><th>Dish</th><th>Monthly Profit</th><th>Decision</th></tr>';
+ resultsCache=[];
+ recipes.forEach(r=>{
+  const impact=r.k.reduce((a,i)=>a+prices[i]*0.4,0);
+  const profit=(r.s-(r.b+impact))*orders[r.n];
+  resultsCache.push({name:r.n,value:profit});
+  const row=document.createElement('tr');
+  row.className='pending';
+  row.innerHTML=`<td>${r.n}</td><td>$${profit.toFixed(0)}</td><td>Pending</td>`;
+  table.appendChild(row);
+ });
+ drawChart();
+}
+
+function gainKnowledge(){
+ const modal=document.getElementById('thinkingModal');
+ modal.style.display='block';
+ setTimeout(()=>{
+  modal.style.display='none';
+  applyDecisions();
+ },3000);
+}
+
+function applyDecisions(){
+ const margin=parseInt(document.getElementById('marginSelect').value);
+ const top=Math.max(...resultsCache.map(r=>r.value));
+ const rows=document.querySelectorAll('#analysisTable tr');
+ resultsCache.forEach((r,i)=>{
+  const drop=((top-r.value)/top)*100;
+  const keep=drop<=margin;
+  rows[i+1].className=keep?'good':'bad';
+  rows[i+1].cells[2].innerText=keep?'Keep':'Remove';
+ });
+}
+
+function runScenario(){
+ const s=scenarios[Math.floor(Math.random()*scenarios.length)];
+ document.getElementById('storyBox').innerText='⚠️ '+s.story;
+ const rows=document.querySelectorAll('#ingredientTable tr');
+ for(let i=1;i<rows.length;i++){
+  const name=rows[i].cells[0].innerText;
+  if(s.affects.includes(name)){
+    const input=rows[i].cells[1].children[0];
+    input.value=(input.value*s.mult).toFixed(2);
+  }
+ }
+ recalculate();
+}
+
+function resetAll(){
+ document.getElementById('storyBox').innerText='No active disruptions.';
+ const rows=document.querySelectorAll('#ingredientTable tr');
+ for(let i=1;i<rows.length;i++){
+  rows[i].cells[1].children[0].value=basePrices[rows[i].cells[0].innerText];
+ }
+ recalculate();
+}
+
+function drawChart(){
+ const c=document.getElementById('chart');
+ const ctx=c.getContext('2d');
+ ctx.clearRect(0,0,c.width,c.height);
+ const max=Math.max(...resultsCache.map(d=>d.value||1));
+ resultsCache.forEach((d,i)=>{
+  const h=d.value/max*240;
+  ctx.fillStyle='#2563eb';
+  ctx.fillRect(70+i*150,300-h,80,h);
+  ctx.fillStyle='#000';
+  ctx.fillText(d.name,50+i*150,320);
+  ctx.fillText('$'+d.value.toFixed(0),80+i*150,280-h);
+ });
+}
+
+resetAll();
+</script>
+</body>
+</html>
