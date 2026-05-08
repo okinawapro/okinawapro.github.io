@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SWOT Analysis – New Software Developer</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  height: 160vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  background: #020617;
+  padding: 15px;
+  text-align: center;
+}
+
+main {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+/* LEFT PANEL */
+.cards-panel {
+  width: 40%;
+  background: #020617;
+  padding: 15px;
+  overflow-y: auto;
+  border-right: 2px solid #38bdf8;
+}
+
+.cards-panel h2 {
+  text-align: center;
+  color: #38bdf8;
+}
+
+.card {
+  background: #f8fafc;
+  color: #020617;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  cursor: grab;
+  text-align: center;
+  font-size: 14px;
+  box-shadow: 0 4px 6px rgba(0,0,0,.3);
+}
+
+.correct { background: #86efac !important; }
+.incorrect { background: #f9a8d4 !important; }
+
+/* RIGHT PANEL */
+.swot-panel {
+  width: 60%;
+  padding: 15px;
+  overflow-y: auto;
+}
+
+.swot {
+  background: #1e293b;
+  border: 2px dashed #38bdf8;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 15px;
+  min-height: 140px;
+}
+
+.swot h3 {
+  text-align: center;
+  margin-top: 0;
+  color: #38bdf8;
+}
+
+/* BUTTONS */
+.buttons {
+  background: #020617;
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+button {
+  background: #38bdf8;
+  border: none;
+  padding: 10px 18px;
+  font-size: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #020617;
+}
+
+button:hover { background: #0ea5e9; }
+
+/* SUCCESS OVERLAY */
+#successMessage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: #22c55e;
+  color: #022c22;
+  padding: 30px 40px;
+  border-radius: 20px;
+  text-align: center;
+  font-size: 32px;
+  font-weight: bold;
+  z-index: 999;
+  opacity: 0;
+  transition: transform 0.6s ease, opacity 0.6s ease;
+}
+
+#successMessage.show {
+  transform: translate(-50%, -50%) scale(1.3);
+  opacity: 1;
+}
+
+/* LESSONS */
+.lessons {
+  background: #020617;
+  padding: 20px;
+}
+
+.lessons h2 {
+  text-align: center;
+  color: #38bdf8;
+}
+
+.lessons ul { line-height: 1.6; }
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📊 SWOT Analysis: New Software Developer</h1>
+  <p>Drag each card to the correct SWOT category</p>
+</header>
+
+<main>
+
+<!-- CARDS -->
+<div class="cards-panel">
+  <h2>SWOT Factors</h2>
+  <div id="pool"></div>
+</div>
+
+<!-- SWOT BOXES -->
+<div class="swot-panel">
+  <div class="swot" data-role="strengths"><h3>Strengths</h3></div>
+  <div class="swot" data-role="weaknesses"><h3>Weaknesses</h3></div>
+  <div class="swot" data-role="opportunities"><h3>Opportunities</h3></div>
+  <div class="swot" data-role="threats"><h3>Threats</h3></div>
+</div>
+
+</main>
+
+<div class="buttons">
+  <button onclick="check()">✅ Check</button>
+  <button onclick="solve()">🧠 Solve</button>
+  <button onclick="resetGame()">🔄 Reset</button>
+</div>
+
+<div class="lessons">
+  <h2>🎯 Lessons Learned</h2>
+  <ul>
+    <li>Strengths and weaknesses are internal to the individual.</li>
+    <li>Opportunities and threats come from the external environment.</li>
+    <li>SWOT helps translate self-awareness into strategic action.</li>
+  </ul>
+</div>
+
+<div id="successMessage">
+  ✨<br>Awesome Job!
+</div>
+
+<script>
+const cardsData = [
+  { text: "Strong Python programming foundation", answer: "strengths" },
+  { text: "Formal CS education (algorithms & data structures)", answer: "strengths" },
+  { text: "Experience with Git and teamwork", answer: "strengths" },
+
+  { text: "Limited production system experience", answer: "weaknesses" },
+  { text: "Smaller professional network", answer: "weaknesses" },
+  { text: "Still developing system design skills", answer: "weaknesses" },
+
+  { text: "Growing demand for Python in AI & data science", answer: "opportunities" },
+  { text: "Remote-first roles expanding global hiring", answer: "opportunities" },
+  { text: "Open-source projects increase visibility", answer: "opportunities" },
+
+  { text: "Increased competition from bootcamps", answer: "threats" },
+  { text: "Rapid framework and tech changes", answer: "threats" },
+  { text: "Tech layoffs and hiring slowdowns", answer: "threats" }
+];
+
+const pool = document.getElementById("pool");
+
+/* SHUFFLE + LOAD */
+function loadCards() {
+  pool.innerHTML = "";
+  shuffle(cardsData).forEach(c => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.draggable = true;
+    card.dataset.answer = c.answer;
+    card.textContent = c.text;
+    pool.appendChild(card);
+  });
+  enableDrag();
+}
+
+/* DRAG SETUP */
+let dragged = null;
+function enableDrag() {
+  document.querySelectorAll(".card").forEach(card => {
+    card.addEventListener("dragstart", () => dragged = card);
+  });
+}
+
+document.querySelectorAll(".swot").forEach(box => {
+  box.addEventListener("dragover", e => e.preventDefault());
+  box.addEventListener("drop", () => dragged && box.appendChild(dragged));
+});
+
+/* CHECK */
+function check() {
+  let allCorrect = true;
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct","incorrect");
+    const role = card.parentElement.dataset.role;
+    if (role === card.dataset.answer) {
+      card.classList.add("correct");
+    } else {
+      card.classList.add("incorrect");
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) showSuccess();
+}
+
+/* SUCCESS ANIMATION */
+function showSuccess() {
+  const msg = document.getElementById("successMessage");
+  msg.classList.add("show");
+  setTimeout(() => msg.classList.remove("show"), 3000);
+}
+
+/* SOLVE */
+function solve() {
+  document.querySelectorAll(".card").forEach(card => {
+    document.querySelector(`.swot[data-role="${card.dataset.answer}"]`)
+      .appendChild(card);
+    card.classList.add("correct");
+  });
+}
+
+/* RESET */
+
+function resetGame() {
+  // 1️⃣ Remove cards from all SWOT boxes
+  document.querySelectorAll(".swot").forEach(box => {
+    box.querySelectorAll(".card").forEach(card => card.remove());
+  });
+
+  // 2️⃣ Reload + shuffle cards back into the pool
+  loadCards();
+}
+
+/* SHUFFLE FUNCTION */
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+loadCards();
+</script>
+
+</body>
+</html>
