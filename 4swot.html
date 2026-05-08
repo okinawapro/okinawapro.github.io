@@ -7,99 +7,99 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f172a;
-  color: #e5e7eb;
-  height: 160vh;
-  display: flex;
-  flex-direction: column;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+  color: #0f172a;
 }
 
 header {
-  background: #020617;
-  padding: 15px;
   text-align: center;
+  padding: 24px;
+}
+
+header h1 {
+  margin-bottom: 6px;
 }
 
 main {
-  flex: 1;
-  display: flex;
-  overflow: hidden;
+  padding: 20px;
 }
 
-/* LEFT PANEL */
+/* CARD AREA */
 .cards-panel {
-  width: 40%;
-  background: #020617;
-  padding: 15px;
-  overflow-y: auto;
-  border-right: 2px solid #38bdf8;
-}
-
-.cards-panel h2 {
-  text-align: center;
-  color: #38bdf8;
+  background: #f1f5f9;
+  padding: 16px;
+  border-radius: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
 }
 
 .card {
-  background: #f8fafc;
-  color: #020617;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
+  background: #ffffff;
+  color: #0f172a; /* FIX: force readable text */
+  padding: 14px 16px;
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.15);
   cursor: grab;
-  text-align: center;
-  font-size: 14px;
-  box-shadow: 0 4px 6px rgba(0,0,0,.3);
+  user-select: none;
+  font-weight: 500;
 }
 
-.correct { background: #86efac !important; }
-.incorrect { background: #f9a8d4 !important; }
+.correct { background: #bbf7d0 !important; }
+.incorrect { background: #fecaca !important; }
 
-/* RIGHT PANEL */
-.swot-panel {
-  width: 60%;
-  padding: 15px;
-  overflow-y: auto;
+/* SWOT GRID */
+.swot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
 }
 
 .swot {
-  background: #1e293b;
-  border: 2px dashed #38bdf8;
-  border-radius: 12px;
-  padding: 10px;
-  margin-bottom: 15px;
-  min-height: 140px;
+  min-height: 170px;
+  padding: 14px;
+  border-radius: 18px;
+  color: #ffffff;
 }
 
 .swot h3 {
   text-align: center;
   margin-top: 0;
-  color: #38bdf8;
+  font-size: 20px;
 }
+
+/* Power colors */
+.swot[data-role="strengths"]     { background: #1e40af; }
+.swot[data-role="weaknesses"]    { background: #b45309; }
+.swot[data-role="opportunities"] { background: #166534; }
+.swot[data-role="threats"]       { background: #991b1b; }
 
 /* BUTTONS */
 .buttons {
-  background: #020617;
-  padding: 10px;
   display: flex;
   justify-content: center;
-  gap: 15px;
+  gap: 16px;
+  margin: 24px 0;
 }
 
 button {
-  background: #38bdf8;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 10px;
   border: none;
-  padding: 10px 18px;
-  font-size: 15px;
-  border-radius: 8px;
+  background: #0f172a;
+  color: white;
   cursor: pointer;
-  color: #020617;
 }
 
-button:hover { background: #0ea5e9; }
+button:hover {
+  background: #020617;
+}
 
-/* SUCCESS OVERLAY */
+/* SUCCESS MESSAGE */
 #successMessage {
   position: fixed;
   top: 50%;
@@ -107,60 +107,67 @@ button:hover { background: #0ea5e9; }
   transform: translate(-50%, -50%) scale(0);
   background: #22c55e;
   color: #022c22;
-  padding: 30px 40px;
-  border-radius: 20px;
+  padding: 36px 46px;
+  border-radius: 26px;
   text-align: center;
-  font-size: 32px;
-  font-weight: bold;
-  z-index: 999;
+  font-size: 36px;
+  font-weight: 700;
   opacity: 0;
   transition: transform 0.6s ease, opacity 0.6s ease;
+  z-index: 999;
 }
 
 #successMessage.show {
-  transform: translate(-50%, -50%) scale(1.3);
+  transform: translate(-50%, -50%) scale(1.4);
   opacity: 1;
 }
 
-/* LESSONS */
-.lessons {
-  background: #020617;
-  padding: 20px;
+/* KEY TAKEAWAY */
+.key-takeaway {
+  margin-top: 30px;
+  padding: 25px 30px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #f8fafc;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
 }
 
-.lessons h2 {
-  text-align: center;
+.key-takeaway.hidden {
+  display: none;
+}
+
+.key-takeaway h2 {
+  margin-top: 0;
   color: #38bdf8;
+  font-size: 26px;
 }
 
-.lessons ul { line-height: 1.6; }
+.key-takeaway p {
+  font-size: 18px;
+  line-height: 1.7;
+  max-width: 900px;
+}
 </style>
 </head>
 
 <body>
 
 <header>
-  <h1>📊 SWOT Analysis: New Software Developer</h1>
-  <p>Drag each card to the correct SWOT category</p>
+  <h1>📊 SWOT Analysis — New Software Developer</h1>
+  <p>Build clarity. Create leverage. Own your strategy.</p>
 </header>
 
 <main>
-
-<!-- CARDS -->
-<div class="cards-panel">
-  <h2>SWOT Factors</h2>
-  <div id="pool"></div>
-</div>
-
-<!-- SWOT BOXES -->
-<div class="swot-panel">
+<!-- SWOT GRID -->
+<div class="swot-grid">
   <div class="swot" data-role="strengths"><h3>Strengths</h3></div>
   <div class="swot" data-role="weaknesses"><h3>Weaknesses</h3></div>
   <div class="swot" data-role="opportunities"><h3>Opportunities</h3></div>
   <div class="swot" data-role="threats"><h3>Threats</h3></div>
 </div>
 
-</main>
+<!-- CARDS -->
+<div class="cards-panel" id="pool"></div>
 
 <div class="buttons">
   <button onclick="check()">✅ Check</button>
@@ -168,60 +175,64 @@ button:hover { background: #0ea5e9; }
   <button onclick="resetGame()">🔄 Reset</button>
 </div>
 
-<div class="lessons">
-  <h2>🎯 Lessons Learned</h2>
-  <ul>
-    <li>Strengths and weaknesses are internal to the individual.</li>
-    <li>Opportunities and threats come from the external environment.</li>
-    <li>SWOT helps translate self-awareness into strategic action.</li>
-  </ul>
-</div>
+<section class="key-takeaway hidden" id="keyTakeaway">
+  <h2>Key Takeaway</h2>
+  <p>
+    A SWOT analysis is not about labeling traits — it is about building strategic
+    self‑awareness that leads to action. <br> By clearly separating what you control
+    (strengths and weaknesses) from what you must respond to (opportunities and threats),
+    you gain power over your decisions. 
+    <br><br>SWOT shifts thinking from “What do I have?” to “I will 🏃‍➡️...”
+  </p>
+</section>
 
-<div id="successMessage">
-  ✨<br>Awesome Job!
-</div>
+</main>
+
+<div id="successMessage">🥰<br>You Rock!!!</div>
 
 <script>
 const cardsData = [
   { text: "Strong Python programming foundation", answer: "strengths" },
-  { text: "Formal CS education (algorithms & data structures)", answer: "strengths" },
-  { text: "Experience with Git and teamwork", answer: "strengths" },
+  { text: "Formal CS education in algorithms & data structures", answer: "strengths" },
+  { text: "Experience using Git and collaborating in teams", answer: "strengths" },
 
-  { text: "Limited production system experience", answer: "weaknesses" },
-  { text: "Smaller professional network", answer: "weaknesses" },
-  { text: "Still developing system design skills", answer: "weaknesses" },
+  { text: "Limited large-scale production system exposure", answer: "weaknesses" },
+  { text: "Small professional network", answer: "weaknesses" },
+  { text: "System design skills still developing", answer: "weaknesses" },
 
-  { text: "Growing demand for Python in AI & data science", answer: "opportunities" },
-  { text: "Remote-first roles expanding global hiring", answer: "opportunities" },
-  { text: "Open-source projects increase visibility", answer: "opportunities" },
+  { text: "High demand for Python in AI and data science", answer: "opportunities" },
+  { text: "Remote work increases job access globally", answer: "opportunities" },
+  { text: "Open-source contributions build credibility", answer: "opportunities" },
 
-  { text: "Increased competition from bootcamps", answer: "threats" },
-  { text: "Rapid framework and tech changes", answer: "threats" },
-  { text: "Tech layoffs and hiring slowdowns", answer: "threats" }
+  { text: "Intense competition for entry-level roles", answer: "threats" },
+  { text: "Rapid shifts in frameworks and tech stacks", answer: "threats" },
+  { text: "Industry layoffs and hiring uncertainty", answer: "threats" }
 ];
 
 const pool = document.getElementById("pool");
+let dragged = null;
 
-/* SHUFFLE + LOAD */
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
 function loadCards() {
   pool.innerHTML = "";
   shuffle(cardsData).forEach(c => {
     const card = document.createElement("div");
     card.className = "card";
-    card.draggable = true;
-    card.dataset.answer = c.answer;
     card.textContent = c.text;
+    card.dataset.answer = c.answer;
+    card.draggable = true;
     pool.appendChild(card);
   });
   enableDrag();
 }
 
-/* DRAG SETUP */
-let dragged = null;
 function enableDrag() {
-  document.querySelectorAll(".card").forEach(card => {
-    card.addEventListener("dragstart", () => dragged = card);
-  });
+  document.querySelectorAll(".card").forEach(card =>
+    card.addEventListener("dragstart", () => dragged = card)
+  );
 }
 
 document.querySelectorAll(".swot").forEach(box => {
@@ -229,7 +240,6 @@ document.querySelectorAll(".swot").forEach(box => {
   box.addEventListener("drop", () => dragged && box.appendChild(dragged));
 });
 
-/* CHECK */
 function check() {
   let allCorrect = true;
   document.querySelectorAll(".card").forEach(card => {
@@ -242,41 +252,32 @@ function check() {
       allCorrect = false;
     }
   });
-
-  if (allCorrect) showSuccess();
+  if (allCorrect) {
+    showSuccess();
+    document.getElementById("keyTakeaway").classList.remove("hidden");
+  }
 }
 
-/* SUCCESS ANIMATION */
 function showSuccess() {
   const msg = document.getElementById("successMessage");
   msg.classList.add("show");
   setTimeout(() => msg.classList.remove("show"), 3000);
 }
 
-/* SOLVE */
 function solve() {
   document.querySelectorAll(".card").forEach(card => {
     document.querySelector(`.swot[data-role="${card.dataset.answer}"]`)
       .appendChild(card);
     card.classList.add("correct");
   });
+  document.getElementById("keyTakeaway").classList.remove("hidden");
 }
-
-/* RESET */
 
 function resetGame() {
-  // 1️⃣ Remove cards from all SWOT boxes
-  document.querySelectorAll(".swot").forEach(box => {
-    box.querySelectorAll(".card").forEach(card => card.remove());
-  });
-
-  // 2️⃣ Reload + shuffle cards back into the pool
+  document.querySelectorAll(".swot .card").forEach(c => c.remove());
   loadCards();
-}
-
-/* SHUFFLE FUNCTION */
-function shuffle(arr) {
-  return [...arr].sort(() => Math.random() - 0.5);
+  document.getElementById("successMessage").classList.remove("show");
+  document.getElementById("keyTakeaway").classList.add("hidden");
 }
 
 loadCards();
