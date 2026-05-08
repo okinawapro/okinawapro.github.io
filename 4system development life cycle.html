@@ -1,0 +1,284 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SDLC Forensics: Fix the Disaster</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 { margin-bottom: 10px; }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      position: relative;
+    }
+
+    .scenario {
+      background: #ffffff;
+      padding: 15px;
+      border-left: 5px solid #dc2626;
+      margin-bottom: 20px;
+    }
+
+    .phases {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .phase {
+      background: #ffffff;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      min-height: 160px;
+      padding: 10px;
+    }
+
+    .phase h3 {
+      font-size: 14px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid #e5e7eb;
+      padding-bottom: 4px;
+    }
+
+    .card {
+      background: #fde68a;
+      padding: 8px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      cursor: grab;
+      font-size: 13px;
+    }
+
+    .placed { cursor: default; }
+
+    /* ✅ FEEDBACK COLORS */
+    .correct {
+      background: #bbf7d0 !important; /* light green */
+    }
+
+    .incorrect {
+      background: #fecaca !important; /* light pink */
+    }
+
+    .cards {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 10px 16px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+    }
+
+    .check { background: #16a34a; }
+    .solve { background: #4b5563; }
+    .reset { background: #64748b; }
+
+    .result {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    /* SUCCESS OVERLAY */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+    }
+
+    .success {
+      background: white;
+      padding: 40px;
+      border-radius: 999px;
+      text-align: center;
+      animation: scaleUp 3s ease-in-out;
+    }
+
+    .success span { font-size: 64px; }
+
+    @keyframes scaleUp {
+      0% { transform: scale(0.3); opacity: 0; }
+      20% { transform: scale(1.1); opacity: 1; }
+      80% { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(0.3); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>SDLC Forensics: Fix the Disaster</h1>
+
+  <div class="scenario">
+    <strong>Scenario:</strong> A national <strong>Emergency Crisis Tracking System</strong> was rushed into production during hurricane season. Emergency crews reported missing alerts, system crashes under heavy load, and inconsistent data between agencies. Public trust collapsed.
+    <br><br>
+    <em>Your mission: Identify where the SDLC failed — and fix it.</em>
+  </div>
+
+  <div class="phases" id="phases"></div>
+
+  <h3>Fixing Cards</h3>
+  <div class="cards" id="cards"></div>
+
+  <div class="buttons">
+    <button class="check" onclick="checkAnswers()">Check</button>
+    <button class="solve" onclick="solve()">Solve</button>
+    <button class="reset" onclick="resetAll()">Reset</button>
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <div id="overlay" style="display:none">
+    <div class="overlay">
+      <div class="success">
+        <span>🎉</span>
+        <div style="font-size:22px;font-weight:bold;">Great Job!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const phases = [
+  "Requirements Analysis",
+  "System Design",
+  "Development",
+  "Testing",
+  "Deployment",
+  "Operations & Maintenance"
+];
+
+const fixes = [
+  { id: "req", text: "Involve emergency responders to validate real-time requirements", correct: "Requirements Analysis" },
+  { id: "design", text: "Create failover and scalability architecture diagrams", correct: "System Design" },
+  { id: "dev", text: "Use version control and code reviews", correct: "Development" },
+  { id: "test", text: "Run load and integration tests with simulated disasters", correct: "Testing" },
+  { id: "deploy", text: "Stage rollout with rollback plan", correct: "Deployment" },
+  { id: "ops", text: "Establish 24/7 monitoring and incident response", correct: "Operations & Maintenance" }
+];
+
+let placements = {};
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function render() {
+  document.getElementById("result").textContent = "";
+
+  const phaseContainer = document.getElementById("phases");
+  const cardsContainer = document.getElementById("cards");
+
+  phaseContainer.innerHTML = "";
+  cardsContainer.innerHTML = "";
+
+  phases.forEach(phase => {
+    const div = document.createElement("div");
+    div.className = "phase";
+    div.ondragover = e => e.preventDefault();
+    div.ondrop = e => {
+      const id = e.dataTransfer.getData("text");
+      placements[id] = phase;
+      render();
+    };
+
+    const title = document.createElement("h3");
+    title.textContent = phase;
+    div.appendChild(title);
+
+    fixes.filter(f => placements[f.id] === phase).forEach(f => {
+      const c = document.createElement("div");
+      c.className = "card placed";
+      c.textContent = f.text;
+      div.appendChild(c);
+    });
+
+    phaseContainer.appendChild(div);
+  });
+
+  shuffle([...fixes]).forEach(fix => {
+    if (!placements[fix.id]) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.textContent = fix.text;
+      card.draggable = true;
+      card.ondragstart = e => e.dataTransfer.setData("text", fix.id);
+      cardsContainer.appendChild(card);
+    }
+  });
+}
+
+function checkAnswers() {
+  document.querySelectorAll('.card.placed').forEach(card => {
+    card.classList.remove('correct', 'incorrect');
+  });
+
+  let allCorrect = true;
+
+  phases.forEach(phase => {
+    document.querySelectorAll('.phase').forEach(phaseDiv => {
+      if (phaseDiv.querySelector('h3').textContent === phase) {
+        phaseDiv.querySelectorAll('.card').forEach(cardEl => {
+          const fix = fixes.find(f => f.text === cardEl.textContent);
+          if (fix && fix.correct === phase) {
+            cardEl.classList.add('correct');
+          } else {
+            cardEl.classList.add('incorrect');
+            allCorrect = false;
+          }
+        });
+      }
+    });
+  });
+
+  if (allCorrect) {
+    document.getElementById("overlay").style.display = "block";
+    setTimeout(() => {
+      document.getElementById("overlay").style.display = "none";
+    }, 3000);
+  } else {
+    document.getElementById("result").textContent = "Review highlighted cards and try again.";
+  }
+}
+
+function solve() {
+  fixes.forEach(f => placements[f.id] = f.correct);
+  render();
+}
+
+function resetAll() {
+  placements = {};
+  render();
+}
+
+render();
+</script>
+</body>
+</html>
