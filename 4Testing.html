@@ -1,0 +1,241 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SDLC Testing Lab – Break It Before Users Do</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+body {
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: #f8fafc;
+  margin: 0;
+  padding: 20px;
+}
+h1, h2 { margin-top: 0; }
+.section {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+button {
+  padding: 10px 16px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  color: white;
+}
+.deploy { background: #16a34a; }
+.nodeploy { background: #dc2626; }
+.check { background: #0ea5e9; }
+.solve { background: #4b5563; }
+.reset { background: #64748b; }
+textarea {
+  width: 100%;
+  margin-top: 10px;
+  min-height: 80px;
+}
+
+.drag-area {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+.card {
+  padding: 10px;
+  background: #fde68a;
+  border-radius: 8px;
+  cursor: grab;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.correct { background: #bbf7d0 !important; }
+.incorrect { background: #fecaca !important; }
+.dropzone {
+  border: 2px dashed #9ca3af;
+  padding: 12px;
+  border-radius: 10px;
+  min-height: 110px;
+}
+.problem { background: #fef2f2; }
+.hidden { display: none; }
+.consequence {
+  font-weight: bold;
+  color: #dc2626;
+  margin-top: 10px;
+}
+</style>
+</head>
+<body>
+
+<h1>🧪 SDLC Testing Lab: Break It Before Users Do</h1>
+
+<!-- PHASE 1 -->
+<div class="section" id="phase1">
+  <h2>Phase 1: Would You Deploy?</h2>
+  <p>
+    Your team has finished building an <strong>Emergency Crisis Tracking System</strong>.
+    It sends alerts, syncs data between agencies, and displays real‑time dashboards.
+    Management wants it deployed immediately.
+  </p>
+  <button class="deploy" onclick="deploy()">Deploy</button>
+  <button class="nodeploy" onclick="notDeploy()">Do Not Deploy</button>
+
+  <div id="whyBox" class="hidden">
+    <p><strong>If you chose NOT to deploy, explain why:</strong></p>
+    <textarea placeholder="Explain your reasoning..."></textarea>
+  </div>
+</div>
+
+<!-- PHASE 2 -->
+<div class="section hidden" id="phase2">
+  <h2>Phase 2: Testing Analysis</h2>
+  <p>Drag each <strong>test type</strong> onto the problem it would most likely catch.</p>
+
+  <div class="drag-area">
+    <div>
+      <h3>Tests</h3>
+      <div id="tests"></div>
+    </div>
+    <div>
+      <h3>Problems</h3>
+      <div class="dropzone problem" data-correct="Unit Test">Alert sent twice</div>
+      <div class="dropzone problem" data-correct="Integration Test">Police and Fire see different data</div>
+      <div class="dropzone problem" data-correct="System Test">Dashboard crashes under heavy load</div>
+      <div class="dropzone problem" data-correct="Acceptance Test">Users say alerts are confusing</div>
+    </div>
+  </div>
+
+  <br>
+  <button class="check" onclick="checkTests()">Check</button>
+  <button class="solve" onclick="solveTests()">Solve</button>
+  <button class="reset" onclick="resetTests()">Reset</button>
+
+  <button class="deploy" onclick="startConsequences()">Continue</button>
+</div>
+
+<!-- PHASE 3 -->
+<div class="section hidden" id="phase3">
+  <h2>Phase 3: Consequences</h2>
+  <p><em>The following are consequences of skipping tests and deploying the application:</em></p>
+  <div id="consequences"></div>
+</div>
+
+<!-- REFLECTION -->
+<div class="section">
+  <h2>Reflection Questions</h2>
+  <ul>
+    <li>Which test prevented the most serious failure?</li>
+    <li>Which bug seemed small but became dangerous?</li>
+    <li>Why can’t testing be postponed until the end?</li>
+  </ul>
+
+  <h2>Lessons Learned</h2>
+  <p>
+    Testing exists to protect users and systems from hidden failure modes.
+    Each test type targets a specific risk. When tests are skipped or rushed,
+    problems escape into production where they become exponentially more expensive
+    and harmful. In critical systems, inadequate testing is not a delay — it is a liability.
+  </p>
+</div>
+
+<script>
+function shuffle(arr) {
+  return arr.sort(() => Math.random() - 0.5);
+}
+
+let allTests = ["Unit Test", "Integration Test", "System Test", "Acceptance Test"];
+let dragged = null;
+
+function deploy() {
+  document.getElementById("phase2").classList.remove("hidden");
+}
+
+function notDeploy() {
+  document.getElementById("whyBox").classList.remove("hidden");
+}
+
+function loadTests() {
+  const testDiv = document.getElementById("tests");
+  testDiv.innerHTML = "";
+  shuffle([...allTests]).forEach(t => {
+    const c = document.createElement("div");
+    c.className = "card";
+    c.textContent = t;
+    c.draggable = true;
+    c.ondragstart = e => dragged = e.target;
+    testDiv.appendChild(c);
+  });
+}
+
+function resetTests() {
+  loadTests();
+  document.querySelectorAll('.dropzone').forEach(z => {
+    z.innerHTML = z.textContent.split('\n')[0];
+    z.classList.remove('correct', 'incorrect');
+  });
+}
+
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", e => {
+  if (e.target.classList.contains("dropzone") && dragged) {
+    e.target.appendChild(dragged);
+  }
+});
+
+function checkTests() {
+  document.querySelectorAll('.dropzone').forEach(z => {
+    const card = z.querySelector('.card');
+    z.classList.remove('correct', 'incorrect');
+    if (!card) return;
+    if (card.textContent === z.dataset.correct) {
+      z.classList.add('correct');
+    } else {
+      z.classList.add('incorrect');
+    }
+  });
+}
+
+function solveTests() {
+  document.querySelectorAll('.dropzone').forEach(z => {
+    const correct = z.dataset.correct;
+    const card = [...document.querySelectorAll('.card')]
+      .find(c => c.textContent === correct);
+    if (card) z.appendChild(card);
+    z.classList.add('correct');
+  });
+}
+
+function startConsequences() {
+  document.getElementById("phase3").classList.remove("hidden");
+  const effects = [
+    "🚨 Missed alert delays emergency response",
+    "💥 System crashes during peak disaster",
+    "📰 Negative media coverage spreads",
+    "📉 Public trust collapses",
+    "💰 Cost to fix multiplies after deployment"
+  ];
+  let i = 0;
+  const box = document.getElementById("consequences");
+  box.innerHTML = "";
+  const timer = setInterval(() => {
+    if (i < effects.length) {
+      const d = document.createElement("div");
+      d.className = "consequence";
+      d.textContent = effects[i++];
+      box.appendChild(d);
+    } else {
+      clearInterval(timer);
+    }
+  }, 2000);
+}
+
+loadTests();
+</script>
+</body>
+</html>
