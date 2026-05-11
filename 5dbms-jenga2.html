@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Database Jenga – Boss Level (Flexible)</title>
+
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #111, #444);
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+
+h1 { margin-bottom: 5px; }
+
+.game {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-top: 25px;
+}
+
+/* STACK */
+.stack-container {
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.slot {
+  width: 180px;
+  height: 58px;
+  border: 2px dashed #aaa;
+  margin: 6px 0;
+  background: rgba(255,255,255,0.1);
+  position: relative;
+}
+
+/* Jenga offsets */
+.slot:nth-child(odd) { transform: translateX(-10px); }
+.slot:nth-child(even) { transform: translateX(10px); }
+
+.slot::before {
+  content: attr(data-label);
+  position: absolute;
+  left: -28px;
+  top: 18px;
+  font-size: 12px;
+}
+
+/* CARD POOL */
+.pool {
+  width: 320px;
+  background: rgba(255,255,255,0.1);
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+/* CARDS */
+.card {
+  height: 48px;
+  line-height: 48px;
+  background: #8b0000;
+  font-weight: bold;
+  border-radius: 4px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 4px 6px rgba(0,0,0,.5);
+}
+
+/* FEEDBACK */
+.correct { background: #2e8b57 !important; }
+.incorrect { background: #ff69b4 !important; }
+
+/* CONTROLS */
+.controls {
+  margin-top: 25px;
+}
+
+button {
+  padding: 8px 16px;
+  font-size: 16px;
+  margin: 5px;
+  cursor: pointer;
+}
+
+/* SUCCESS */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.success-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.success-card {
+  width: 260px;
+  height: 60px;
+  line-height: 60px;
+  background: gold;
+  color: black;
+  font-size: 34px;
+  font-weight: bold;
+  margin: 4px auto;
+  border-radius: 4px;
+  animation: pop 0.6s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(.3); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+</style>
+</head>
+
+<body>
+
+<h1>🏁 Database Jenga — Boss Level</h1>
+<p>Place the cars in order (fields, records, tables, databases)</p>
+
+<div class="game">
+  <div class="stack-container">
+    <div class="stack" id="stack"></div>
+  </div>
+  <div class="pool" id="pool"></div>
+</div>
+
+<div class="controls">
+  <button onclick="checkStack()">Check</button>
+  <button onclick="solveStack()">Solve</button>
+  <button onclick="resetGame()">Reset</button>
+</div>
+
+<script>
+let dragged = null;
+
+/* CARD DATA WITH LEVEL */
+const cards = [
+  {text:"Car Color", level:"field"},
+  {text:"Engine Type", level:"field"},
+  {text:"Horsepower", level:"field"},
+  {text:"Supra Model", level:"row"},
+  {text:"RX-7 Model", level:"row"},
+  {text:"GT-R Model", level:"row"},
+  {text:"Toyota", level:"table"},
+  {text:"Mazda", level:"table"},
+  {text:"Nissan", level:"table"},
+  {text:"Japanese Cars", level:"database"},
+  {text:"Sports Cars", level:"database"},
+  {text:"Track Cars", level:"database"}
+];
+
+const zoneRules = {
+  field: [1,2,3],
+  row: [4,5,6],
+  table: [7,8,9],
+  database: [10,11,12]
+};
+
+function shuffle(arr){ return arr.sort(()=>Math.random()-.5); }
+
+function setup(){
+  const stack = document.getElementById("stack");
+  const pool = document.getElementById("pool");
+  stack.innerHTML = "";
+  pool.innerHTML = "";
+
+  shuffle([...cards]).forEach(c=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.textContent = c.text;
+    card.dataset.level = c.level;
+    card.draggable = true;
+    card.ondragstart = ()=>dragged = card;
+    pool.appendChild(card);
+  });
+
+  for(let i=1;i<=12;i++){
+    const slot = document.createElement("div");
+    slot.className = "slot";
+    slot.dataset.position = i;
+    slot.dataset.label = i;
+    slot.ondragover = e=>e.preventDefault();
+    slot.ondrop = ()=>{ if(!slot.firstChild) slot.appendChild(dragged); };
+    stack.appendChild(slot);
+  }
+}
+
+function checkStack(){
+  let allCorrect = true;
+
+  document.querySelectorAll(".slot").forEach(slot=>{
+    const card = slot.firstChild;
+    if(!card) { allCorrect = false; return; }
+
+    const validZones = zoneRules[card.dataset.level];
+    if(validZones.includes(Number(slot.dataset.position))){
+      card.classList.add("correct");
+      card.classList.remove("incorrect");
+    } else {
+      card.classList.add("incorrect");
+      card.classList.remove("correct");
+      allCorrect = false;
+    }
+  });
+
+  if(allCorrect) celebrate();
+}
+
+function solveStack(){
+  Object.keys(zoneRules).forEach(level=>{
+    const slots = zoneRules[level].map(n =>
+      document.querySelector(`.slot[data-position="${n}"]`)
+    );
+    const cardsOfLevel = [...document.querySelectorAll(`.card[data-level="${level}"]`)];
+    cardsOfLevel.forEach((c,i)=>slots[i].appendChild(c));
+  });
+}
+
+function resetGame(){
+  setup();
+}
+
+function celebrate(){
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  const stack = document.createElement("div");
+  stack.className = "success-stack";
+  overlay.appendChild(stack);
+  document.body.appendChild(overlay);
+
+  const words = ["You","Did","It!"];
+  let i = 0;
+  const interval = setInterval(()=>{
+    if(i === words.length){
+      clearInterval(interval);
+      setTimeout(()=>overlay.remove(),3000);
+      return;
+    }
+    const c = document.createElement("div");
+    c.className = "success-card";
+    c.textContent = words[i];
+    stack.appendChild(c);
+    i++;
+  },700);
+}
+
+setup();
+</script>
+
+</body>
+</html>
