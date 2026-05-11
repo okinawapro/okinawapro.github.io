@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Cloud vs On-Prem Teaching Simulation</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0f172a;
+  color:white;
+}
+
+h1{
+  text-align:center;
+  margin-top:20px;
+}
+
+.subtitle{
+  text-align:center;
+  color:#94a3b8;
+}
+
+.controls{
+  text-align:center;
+  margin:10px;
+}
+
+button{
+  padding:10px 16px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.timeline{
+  width:90%;
+  margin:20px auto;
+  height:10px;
+  background:#1e293b;
+  border-radius:20px;
+  overflow:hidden;
+  position:relative;
+}
+
+.progress{
+  height:100%;
+  width:0%;
+  background:linear-gradient(90deg,#3b82f6,#22c55e);
+  animation:run 36s linear forwards;
+}
+
+@keyframes run{
+  from{width:0%}
+  to{width:100%}
+}
+
+.marker{
+  position:absolute;
+  top:-22px;
+  transform:translateX(-50%);
+  font-size:12px;
+}
+
+.marker.july{left:0%}
+.marker.nov{left:33%}
+.marker.dec{left:66%}
+.marker.jan{left:100%}
+
+#story{
+  width:90%;
+  margin:10px auto;
+  padding:10px;
+  background:#0b1220;
+  border:1px solid #334155;
+  border-radius:10px;
+  min-height:50px;
+  transition:0.5s;
+  color:#cbd5e1;
+}
+
+.sim{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  width:95%;
+  margin:20px auto;
+}
+
+.panel{
+  background:#020617;
+  border:2px solid #334155;
+  border-radius:12px;
+  padding:15px;
+  min-height:600px;
+  position:relative;
+  overflow:hidden;
+}
+
+.servers{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.server{
+  width:55px;
+  height:55px;
+  background:#2563eb;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:8px;
+}
+
+.onprem{background:#7c2d12}
+
+.metric{margin:10px 0}
+
+.bubble{
+  position:absolute;
+  padding:8px 12px;
+  border-radius:12px;
+  font-size:13px;
+  max-width:200px;
+  opacity:0;
+  transition:1s;
+}
+
+.pain{background:#7f1d1d;border:2px solid #ef4444}
+.good{background:#14532d;border:2px solid #22c55e}
+
+#resultModal{
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.75);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:999;
+}
+
+.modalBox{
+  background:#0b1220;
+  padding:20px;
+  border-radius:12px;
+  width:90%;
+  max-width:900px;
+  border:2px solid #334155;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13px;
+}
+
+td,th{
+  padding:6px;
+  border-bottom:1px solid #334155;
+}
+</style>
+</head>
+
+<body>
+
+<h1>☁️ Cloud vs On-Prem Simulation</h1>
+<div class="subtitle">Interactive classroom decision simulation</div>
+
+
+<div class="timeline">
+  <div class="progress"></div>
+  <div class="marker july">July</div>
+  <div class="marker nov">Nov</div>
+  <div class="marker dec">Dec</div>
+  <div class="marker jan">Jan</div>
+</div>
+
+<div id="story">Simulation ready...</div>
+
+<div class="sim">
+
+<div class="panel" id="onprem">
+<h3>🏢 On-Prem</h3>
+<div class="servers" id="onServers"></div>
+<div class="metric">Cost: $<span id="onCost">3000</span></div>
+<div class="metric">Total: $<span id="onTotal">0</span></div>
+</div>
+
+<div class="panel" id="cloud">
+<h3>☁️ Cloud</h3>
+<div class="servers" id="clServers"></div>
+<div class="metric">Cost: $<span id="clCost">500</span></div>
+<div class="metric">Total: $<span id="clTotal">0</span></div>
+</div>
+
+</div>
+
+<!-- RESULT POPUP -->
+<div id="resultModal">
+<div class="modalBox">
+
+<h2 style="text-align:center">📊 Final Comparison</h2>
+
+<table>
+<tr><th>Category</th><th>On-Prem</th><th>Cloud</th></tr>
+<tr><td>Scaling</td><td>Manual hardware</td><td>Automatic</td></tr>
+<tr><td>Peak traffic</td><td>Fails under load</td><td>Handles spikes</td></tr>
+<tr><td>Cost model</td><td>Fixed high cost</td><td>Pay-as-you-go</td></tr>
+<tr><td>Downtime risk</td><td>High</td><td>Low</td></tr>
+<tr><td>Flexibility</td><td>Low</td><td>High</td></tr>
+<tr><td>Customer experience</td><td>Unstable</td><td>Stable</td></tr>
+<tr><td>Maintenance</td><td>Internal burden</td><td>Managed service</td></tr>
+<tr><td>Long-term cost</td><td>Idle waste</td><td>Optimized usage</td></tr>
+</table>
+
+<div style="text-align:center;margin-top:15px;">
+<button onclick="closeModal()" style="background:#3b82f6;color:white">Close</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+let onTotal=0;
+let clTotal=0;
+
+const on=document.getElementById("onServers");
+const cl=document.getElementById("clServers");
+ let paused=false;
+
+function wait(fn,delay){
+  setTimeout(()=>{
+    if(paused){
+      wait(fn,200);
+    }else fn();
+  },delay);
+}
+
+function story(text){
+  wait(()=>{
+    document.getElementById("story").innerHTML=text;
+  },0);
+}
+
+function servers(el,count,color){
+  el.innerHTML="";
+  for(let i=0;i<count;i++){
+    let d=document.createElement("div");
+    d.className="server";
+    d.style.background=color;
+    d.innerHTML="🖥️";
+    el.appendChild(d);
+  }
+}
+
+function bubble(panel,text,type,delay){
+
+  setTimeout(()=>{
+    const b=document.createElement("div");
+    b.className=`bubble ${type}`;
+
+    let lanes=[60,140,220,300,380,460];
+    let top=lanes[Math.floor(Math.random()*lanes.length)];
+    let left=Math.random()*60+10;
+
+    b.style.top=top+"px";
+    b.style.left=left+"%";
+    b.innerHTML=text;
+
+    panel.appendChild(b);
+
+    setTimeout(()=>b.style.opacity=1,50);
+
+  },delay);
+}
+
+function updateCosts(o,c){
+  onTotal+=o;
+  clTotal+=c;
+
+  document.getElementById("onTotal").innerText=onTotal;
+  document.getElementById("clTotal").innerText=clTotal;
+}
+
+/* JULY */
+function july(){
+
+story("☀️ July: Stable traffic. No issues.");
+
+servers(on,1,"#7c2d12");
+servers(cl,1,"#2563eb");
+
+updateCosts(3000,500);
+}
+
+/* NOV */
+function november(){
+
+story("🛍️ November: Traffic increases. On-prem begins reacting manually.");
+
+servers(on,2,"#7c2d12");
+servers(cl,3,"#2563eb");
+
+updateCosts(18000,1200);
+
+bubble(on,"💾 Need more storage", "pain",1000);
+bubble(on,"🖥️ Buy server", "pain",3000);
+bubble(on,"😰 Performance dropping", "pain",6000);
+
+bubble(cl,"🚀 Auto scaling", "good",1200);
+bubble(cl,"😊 Happy customers", "good",3500);
+}
+
+/* DEC */
+function december(){
+
+story("🎄 December: Peak load. Crisis vs stability.");
+
+servers(on,3,"#7c2d12");
+servers(cl,6,"#2563eb");
+
+updateCosts(25000,4500);
+
+bubble(on,"😡 Checkout failed", "pain",800);
+bubble(on,"🛒 Lost customers", "pain",2500);
+bubble(on,"🔥 System overload", "pain",4500);
+
+bubble(cl,"😊 Instant checkout", "good",1200);
+bubble(cl,"📈 Stable revenue", "good",3000);
+bubble(cl,"🚀 No downtime", "good",5000);
+}
+
+/* JAN */
+function january(){
+
+story("❄️ January: Demand drops. Cloud scales down.");
+
+servers(on,3,"#7c2d12");
+servers(cl,1,"#2563eb");
+
+updateCosts(25000,600);
+
+bubble(on,"📉 Lost customers", "pain",1500);
+bubble(on,"💸 Idle servers", "pain",3500);
+bubble(on,"😞 Reputation damage", "pain",6000);
+
+bubble(cl,"😌 Scaled down", "good",1500);
+bubble(cl,"📊 Analytics running", "good",4500);
+
+/* END */
+setTimeout(showModal,8000);
+}
+
+/* MODAL */
+function showModal(){
+document.getElementById("resultModal").style.display="flex";
+}
+
+function closeModal(){
+document.getElementById("resultModal").style.display="none";
+}
+
+/* TIMELINE */
+setTimeout(july,0);
+setTimeout(november,7000);
+setTimeout(december,15000);
+setTimeout(january,24000);
+
+</script>
+
+</body>
+</html>

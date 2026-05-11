@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cloud vs Server Sorting Game</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+h1{text-align:center;margin-top:15px}
+.subtitle{text-align:center;color:#94a3b8}
+
+/* CARD AREA */
+#cards{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  padding:10px;
+  width:95%;
+  margin:10px auto;
+  background:#0b1220;
+  border:1px solid #334155;
+  border-radius:10px;
+}
+
+.card{
+  background:#1e293b;
+  padding:10px;
+  border-radius:8px;
+  width:200px;
+  cursor:grab;
+  font-size:13px;
+  border:1px solid #334155;
+}
+
+/* ZONES */
+.container{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+  width:95%;
+  margin:20px auto;
+}
+
+.zone{
+  min-height:420px;
+  background:#020617;
+  border:2px dashed #475569;
+  border-radius:10px;
+  padding:10px;
+}
+
+.zone h2{text-align:center}
+
+.serverless{border-color:#22c55e}
+.server{border-color:#ef4444}
+
+/* BUTTONS */
+.controls{
+  text-align:center;
+  margin:10px;
+}
+
+button{
+  padding:10px 14px;
+  margin:5px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.check{background:#3b82f6;color:white}
+.reset{background:#ef4444;color:white}
+.solve{background:#22c55e;color:black}
+
+/* POPUP */
+#modal{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.75);
+  align-items:center;
+  justify-content:center;
+}
+
+.box{
+  background:#0b1220;
+  padding:20px;
+  border-radius:12px;
+  width:90%;
+  max-width:650px;
+}
+
+/* 🎉 SUCCESS OVERLAY */
+#success{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;height:100%;
+  background:rgba(0,0,0,0.7);
+  align-items:center;
+  justify-content:center;
+  font-size:32px;
+  font-weight:bold;
+  color:#22c55e;
+  animation:pop 3s ease;
+}
+
+@keyframes pop{
+  0%{transform:scale(0.5);opacity:0}
+  20%{transform:scale(1.1);opacity:1}
+  80%{transform:scale(1);opacity:1}
+  100%{opacity:0}
+}
+</style>
+</head>
+
+<body>
+
+<h1>☁️ Cloud vs 🏢 Server Sorting Game</h1>
+<div class="subtitle">Drag each situation into the correct category</div>
+
+<!-- CARDS -->
+<div id="cards">
+
+<div class="card" draggable="true" data-type="server">
+A bank runs its ATM system that must always be on
+</div>
+
+<div class="card" draggable="true" data-type="serverless">
+A website suddenly gets thousands of visitors after a viral post
+</div>
+
+<div class="card" draggable="true" data-type="server">
+A company keeps its email system in its own building
+</div>
+
+<div class="card" draggable="true" data-type="serverless">
+A photo app only runs when users upload pictures
+</div>
+
+<div class="card" draggable="true" data-type="server">
+A hospital stores patient records locally
+</div>
+
+<div class="card" draggable="true" data-type="serverless">
+An online shop gets big spikes during holiday sales
+</div>
+
+<div class="card" draggable="true" data-type="server">
+A school system used every day at fixed hours
+</div>
+
+<div class="card" draggable="true" data-type="serverless">
+A chatbot used only sometimes during the day
+</div>
+
+<div class="card" draggable="true" data-type="server">
+A video game running on company-owned machines
+</div>
+
+<div class="card" draggable="true" data-type="serverless">
+A ticket site gets spikes when events go on sale
+</div>
+
+</div>
+
+<!-- ZONES -->
+<div class="container">
+
+<div class="zone server" id="serverBox">
+<h2>🏢 Server / On-Prem</h2>
+</div>
+
+<div class="zone serverless" id="serverlessBox">
+<h2>☁️ Serverless / Cloud</h2>
+</div>
+
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+<button class="check" onclick="check()">Check</button>
+<button class="solve" onclick="solve()">Solve</button>
+<button class="reset" onclick="resetGame()">Reset</button>
+</div>
+
+<!-- RESULT MODAL -->
+<div id="modal">
+<div class="box">
+<div id="result"></div>
+<div style="text-align:center;margin-top:10px;">
+<button onclick="closeModal()" style="background:#ef4444;color:white;">Close</button>
+</div>
+</div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div id="success">
+🎉 Perfect! All correct!
+</div>
+
+<script>
+
+let dragged=null;
+
+/* DRAG */
+document.querySelectorAll(".card").forEach(c=>{
+  c.addEventListener("dragstart",()=>dragged=c);
+});
+
+/* DROP */
+function setup(zone){
+zone.addEventListener("dragover",e=>e.preventDefault());
+zone.addEventListener("drop",()=>{
+  if(dragged) zone.appendChild(dragged);
+});
+}
+
+setup(serverBox);
+setup(serverlessBox);
+
+/* CHECK */
+function check(){
+
+let correct=0;
+let total=document.querySelectorAll(".card").length;
+
+document.querySelectorAll(".card").forEach(c=>{
+  let ok =
+    (c.dataset.type==="server" && c.parentElement.id==="serverBox") ||
+    (c.dataset.type==="serverless" && c.parentElement.id==="serverlessBox");
+
+  c.style.border = ok ? "2px solid #22c55e" : "2px solid #ef4444";
+
+  if(ok) correct++;
+});
+
+if(correct===total){
+  showSuccess();
+  return;
+}
+
+document.getElementById("result").innerHTML=`
+<h2>📊 Result</h2>
+<p>You got <b>${correct}/${total}</b> correct.</p>
+
+<p><b>Hint:</b> Server systems are for stable, always-on services.<br>
+Serverless is for unpredictable or spike-based usage.</p>
+`;
+
+document.getElementById("modal").style.display="flex";
+}
+
+/* SOLVE */
+function solve(){
+
+document.querySelectorAll(".card").forEach(c=>{
+  if(c.dataset.type==="server"){
+    serverBox.appendChild(c);
+  }else{
+    serverlessBox.appendChild(c);
+  }
+});
+
+document.getElementById("result").innerHTML=`
+<h2>🧠 Solution</h2>
+
+<p><b>🏢 Server systems:</b> Always running systems like banks, hospitals, schools.</p>
+<p><b>☁️ Serverless systems:</b> Systems that scale with demand like viral apps or shopping spikes.</p>
+
+<p>The key idea:<br>
+<b>Fixed workload → servers</b><br>
+<b>Unpredictable workload → serverless</b></p>
+`;
+
+document.getElementById("modal").style.display="flex";
+}
+
+/* RESET */
+function resetGame(){
+
+document.querySelectorAll(".card").forEach(c=>{
+  document.getElementById("cards").appendChild(c);
+});
+
+}
+
+/* SUCCESS ANIMATION */
+function showSuccess(){
+
+let s=document.getElementById("success");
+s.style.display="flex";
+
+setTimeout(()=>{
+  s.style.display="none";
+},3000);
+
+}
+
+/* CLOSE MODAL */
+function closeModal(){
+document.getElementById("modal").style.display="none";
+}
+
+</script>
+
+</body>
+</html>
