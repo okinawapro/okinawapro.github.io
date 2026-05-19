@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logic Maze: Master Programmer</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; }
+        #app-container { display: flex; gap: 20px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        #editor-side { width: 320px; display: flex; flex-direction: column; }
+        textarea { width: 100%; height: 220px; border: 2px solid #cbd5e0; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; resize: none; margin-bottom: 10px; }
+        button { padding: 12px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
+        .btn-run { background: #48bb78; color: white; margin-bottom: 5px; }
+        .btn-run:hover { background: #38a169; }
+        .btn-guide { background: #667eea; color: white; margin-bottom: 5px; }
+        .btn-reset { background: #edf2f7; color: #4a5568; }
+        #console { background: #2d3748; color: #a0aec0; padding: 10px; border-radius: 8px; font-size: 12px; height: 60px; overflow-y: auto; margin-top: 10px; }
+        #maze-svg { border: 5px solid #2d3748; background: white; border-radius: 4px; }
+        
+        #modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10; justify-content: center; align-items: center; }
+        #modal { background: white; padding: 30px; border-radius: 12px; max-width: 500px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        code { background: #f1f1f1; padding: 2px 5px; border-radius: 4px; color: #e53e3e; }
+        pre { background: #f7fafc; padding: 10px; border-left: 4px solid #667eea; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <h1>Code Your Way Out! 🚀</h1>
+
+    <div id="app-container">
+        <div id="editor-side">
+            <textarea id="scriptInput" placeholder="Write your code here...">define zigzag {
+  right 1
+  down 1
+}
+
+repeat 4 {
+  zigzag
+}</textarea>
+            <button class="btn-run" onclick="executeScript()">▶ Run Program</button>
+            <button class="btn-guide" onclick="toggleModal(true)">📖 View Command Guide</button>
+            <button class="btn-reset" onclick="resetGame()">Reset Player</button>
+            <div id="console">> System ready...</div>
+        </div>
+        <svg id="maze-svg" width="400" height="400" viewBox="0 0 400 400"></svg>
+    </div>
+
+    <div id="modal-overlay">
+        <div id="modal">
+            <h2>How to Program 💻</h2>
+            <p><b>Jump (Goto):</b> Move to coordinates (0-9).<br><code>goto 5 5</code></p>
+            <p><b>Loop (Repeat):</b> Run commands multiple times.<br>
+            <pre>repeat 3 {
+  right 1
+  down 1
+}</pre></p>
+            <p><b>Function (Define):</b> Name a group of actions.<br>
+            <pre>define square {
+  right 1
+  down 1
+  left 1
+  up 1
+}
+square</pre></p>
+            <button class="btn-run" style="width:100%" onclick="toggleModal(false)">Close Guide</button>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 10, CELL_SIZE = 40;
+        const svg = document.getElementById('maze-svg');
+        const consoleLog = document.getElementById('console');
+        let playerPos = { x: 0, y: 0 };
+        let maze = [];
+        let functions = {};
+
+        function toggleModal(show) { document.getElementById('modal-overlay').style.display = show ? 'flex' : 'none'; }
+        function log(msg) { const div = document.createElement('div'); div.textContent = "> " + msg; consoleLog.prepend(div); }
+
+        function generateMaze() {
+            maze = Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => ({ n: true, s: true, e: true, w: true, visited: false })));
+            let stack = [[0, 0]];
+            maze[0][0].visited = true;
+            while (stack.length > 0) {
+                let [x, y] = stack[stack.length - 1];
+                let neighbors = [];
+                if (y > 0 && !maze[y-1][x].visited) neighbors.push([x, y-1, 'n', 's']);
+                if (y < GRID_SIZE-1 && !maze[y+1][x].visited) neighbors.push([x, y+1, 's', 'n']);
+                if (x > 0 && !maze[y][x-1].visited) neighbors.push([x-1, y, 'w', 'e']);
+                if (x < GRID_SIZE-1 && !maze[y][x+1].visited) neighbors.push([x+1, y, 'e', 'w']);
+                if (neighbors.length > 0) {
+                    let [nx, ny, dir, opp] = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    maze[y][x][dir] = false; maze[ny][nx][opp] = false;
+                    maze[ny][nx].visited = true; stack.push([nx, ny]);
+                } else stack.pop();
+            }
+            render();
+        }
+
+        function render() {
+            svg.innerHTML = '';
+            const exit = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            exit.setAttribute("x", 360); exit.setAttribute("y", 360); exit.setAttribute("width", 40); exit.setAttribute("height", 40); exit.setAttribute("fill", "#c6f6d5"); svg.appendChild(exit);
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const pX = x * 40, pY = y * 40;
+                    if (maze[y][x].n) drawL(pX, pY, pX+40, pY);
+                    if (maze[y][x].s) drawL(pX, pY+40, pX+40, pY+40);
+                    if (maze[y][x].e) drawL(pX+40, pY, pX+40, pY+40);
+                    if (maze[y][x].w) drawL(pX, pY, pX, pY+40);
+                }
+            }
+            const char = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            char.setAttribute("x", playerPos.x * 40 + 20); char.setAttribute("y", playerPos.y * 40 + 30);
+            char.setAttribute("font-size", "24"); char.setAttribute("text-anchor", "middle");
+            char.textContent = (playerPos.x === 9 && playerPos.y === 9) ? "😊" : "😟";
+            svg.appendChild(char);
+        }
+
+        function drawL(x1, y1, x2, y2) {
+            const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+            l.setAttribute("stroke", "#2d3748"); l.setAttribute("stroke-width", "2"); svg.appendChild(l);
+        }
+
+        async function executeScript() {
+            const text = document.getElementById('scriptInput').value;
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l !== "");
+            functions = {}; 
+            
+            // Pass 1: Find all definitions
+            for (let i = 0; i < lines.length; i++) {
+                if (lines[i].toLowerCase().startsWith('define')) {
+                    let name = lines[i].split(' ')[1];
+                    let block = [];
+                    i++;
+                    while(i < lines.length && !lines[i].includes('}')) {
+                        block.push(lines[i]);
+                        i++;
+                    }
+                    functions[name] = block;
+                }
+            }
+
+            log("Running...");
+            // Pass 2: Execute non-definition lines
+            await parseBlock(lines, true);
+            log("Done.");
+        }
+
+        async function parseBlock(lines, skipDefinitions = false) {
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i].toLowerCase();
+
+                if (line.startsWith('define')) {
+                    while(i < lines.length && !lines[i].includes('}')) i++;
+                    continue;
+                }
+
+                if (line.startsWith('repeat')) {
+                    let count = parseInt(line.split(' ')[1]);
+                    let block = [];
+                    i++;
+                    while(i < lines.length && !lines[i].includes('}')) {
+                        block.push(lines[i]);
+                        i++;
+                    }
+                    for(let r=0; r<count; r++) { await parseBlock(block); }
+                    continue;
+                }
+
+                if (line.startsWith('goto')) {
+                    let p = line.split(' ');
+                    playerPos.x = Math.min(9, Math.max(0, parseInt(p[1])));
+                    playerPos.y = Math.min(9, Math.max(0, parseInt(p[2])));
+                    render();
+                    await new Promise(r => setTimeout(r, 150));
+                    continue;
+                }
+
+                if (functions[line]) {
+                    await parseBlock(functions[line]);
+                } else {
+                    await move(line);
+                }
+            }
+        }
+
+        async function move(line) {
+            const parts = line.split(' ');
+            const dir = parts[0];
+            const steps = parseInt(parts[1]) || 1;
+            for (let s = 0; s < steps; s++) {
+                if (canMove(dir)) {
+                    if (dir === 'up') playerPos.y--;
+                    if (dir === 'down') playerPos.y++;
+                    if (dir === 'left') playerPos.x--;
+                    if (dir === 'right') playerPos.x++;
+                    render();
+                    await new Promise(r => setTimeout(r, 250));
+                }
+            }
+        }
+
+        function canMove(dir) {
+            const c = maze[playerPos.y][playerPos.x];
+            return (dir==='up'&&!c.n) || (dir==='down'&&!c.s) || (dir==='left'&&!c.w) || (dir==='right'&&!c.e);
+        }
+
+        function resetGame() { playerPos = { x: 0, y: 0 }; render(); log("Reset."); }
+        generateMaze();
+    </script>
+</body>
+</html>

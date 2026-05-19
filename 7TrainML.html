@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Train the ML - ML Pattern Simulation</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #e0f2f1 0%, #e1f5fe 100%);
+    padding: 20px;
+    color: #333;
+}
+
+h2 { color: #00796b; margin-bottom: 10px; }
+
+.container {
+    margin: 0 auto;
+    max-width: 1000px;
+}
+
+.card {
+    width: 160px;
+    padding: 12px;
+    margin: 8px;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    display: inline-block;
+    border: 1px solid #cfd8dc;
+    transition: transform 0.2s;
+}
+
+.card:hover { transform: translateY(-3px); }
+.card b { display: block; color: #00796b; font-size: 1.1em; margin-top: 5px; }
+
+.zone-container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px 0;
+}
+
+.zone {
+    width: 320px;
+    min-height: 250px;
+    border: 3px dashed #90a4ae;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.5);
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.drop-area {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    min-height: 150px;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+button {
+    margin: 10px;
+    padding: 12px 25px;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    transition: 0.2s;
+}
+
+button:hover { filter: brightness(90%); }
+
+.btn-primary { background-color: #00796b; color: white; }
+.btn-reset { background-color: #78909c; color: white; }
+.btn-ai { background-color: #ff9800; color: white; }
+
+.highlight { 
+    border-color: #4caf50; 
+    background: rgba(76, 175, 80, 0.1);
+    box-shadow: 0 0 20px rgba(76, 175, 80, 0.3);
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    margin: 10% auto;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 15px;
+    text-align: left;
+}
+
+#testCard {
+    background: #fff3e0;
+    border: 2px solid #ff9800;
+    position: relative;
+    z-index: 10;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🎧 You Are the Trainer</h2>
+    <p>Sort the songs below into two boxes to define a pattern (e.g., Fast vs. Slow).<br>Once sorted, the AI will try to classify a new song based on <b>your</b> training.</p>
+
+    <div id="cards"></div>
+
+    <div class="zone-container">
+        <div class="zone" id="leftZone">
+            <h4>Box A (Group 1)</h4>
+            <div class="drop-area" id="leftDropArea"></div>
+        </div>
+        <div class="zone" id="rightZone">
+            <h4>Box B (Group 2)</h4>
+            <div class="drop-area" id="rightDropArea"></div>
+        </div>
+    </div>
+
+    <div>
+        <button class="btn-primary" onclick="checkTraining()">✅ Verify Sorting</button>
+        <button class="btn-reset" onclick="resetGame()">🔄 Reset Simulation</button>
+        <button class="btn-primary" id="testBtn" onclick="testAI()">🧪 Generate Test Song</button>
+    </div>
+
+    <button id="decideBtn" class="btn-ai" style="display:none;" onclick="aiDecide()">🤖 Run Algorithm</button>
+
+    <p id="message"></p>
+
+    <!-- Modal -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <h3 style="color: #ff9800;">🤖 Classification Result</h3>
+        <div id="aiExplanation"></div>
+        <button class="btn-primary" onclick="closeModal()">Got it!</button>
+      </div>
+    </div>
+</div>
+
+<script>
+const trainingData = [
+    {name:"Espresso", bpm:110}, {name:"Greedy", bpm:111}, {name:"Flowers", bpm:118},
+    {name:"Paint The Town Red", bpm:100}, {name:"Cruel Summer", bpm:170},
+    {name:"Snooze", bpm:70}, {name:"Calm Down", bpm:107}, {name:"Kill Bill", bpm:75},
+    {name:"Bad Habit", bpm:84}, {name:"Fast Car", bpm:98}
+];
+
+const testPool = [
+    {name:"Stick Season", bpm:92}, {name:"Yes, And?", bpm:125}, {name:"Feather", bpm:123}
+];
+
+let currentTest = null;
+
+function createCards(){
+    const container = document.getElementById("cards");
+    container.innerHTML = ""; 
+    trainingData.forEach((song, i) => {
+        let c = document.createElement("div");
+        c.className = "card";
+        c.id = `card${i}`;
+        c.innerHTML = `${song.name} <b>${song.bpm} BPM</b>`;
+        c.dataset.bpm = song.bpm;
+        c.setAttribute('draggable', true);
+        c.ondragstart = (e) => e.dataTransfer.setData("text", e.target.id);
+        container.appendChild(c);
+    });
+}
+
+// Initial setup
+createCards();
+
+// Handle Drops
+function setupDropArea(id) {
+    const el = document.getElementById(id);
+    el.ondragover = (e) => e.preventDefault();
+    el.ondrop = (e) => {
+        e.preventDefault();
+        const cardId = e.dataTransfer.getData("text");
+        const card = document.getElementById(cardId);
+        if (card) el.appendChild(card);
+    };
+}
+setupDropArea("leftDropArea");
+setupDropArea("rightDropArea");
+
+function checkTraining(){
+    const placed = document.querySelectorAll(".drop-area .card").length;
+    const msg = document.getElementById("message");
+    if(placed === trainingData.length) {
+        msg.innerHTML = "✅ <b>Training Ready!</b> The AI has data to learn from.";
+        msg.style.color = "#2e7d32";
+    } else {
+        msg.innerHTML = `⚠️ Sort all 10 songs before testing. (${placed}/10 done)`;
+        msg.style.color = "#d32f2f";
+    }
+}
+
+function testAI(){
+    if(document.querySelectorAll(".drop-area .card").length < trainingData.length) {
+        alert("Please sort all training songs first!");
+        return;
+    }
+    
+    // Remove old test card if exists
+    const old = document.getElementById("testCard");
+    if(old) old.remove();
+
+    currentTest = testPool[Math.floor(Math.random() * testPool.length)];
+    let card = document.createElement("div");
+    card.className = "card";
+    card.id = "testCard";
+    card.innerHTML = `NEW: ${currentTest.name} <b>${currentTest.bpm} BPM</b>`;
+    document.querySelector(".container").insertBefore(card, document.querySelector(".zone-container"));
+    
+    document.getElementById("decideBtn").style.display = "inline-block";
+    document.getElementById("testBtn").disabled = true;
+}
+
+function aiDecide(){
+    const getAvg = (selector) => {
+        const nodes = document.querySelectorAll(selector);
+        if(nodes.length === 0) return 0;
+        const sum = Array.from(nodes).reduce((acc, curr) => acc + parseInt(curr.dataset.bpm), 0);
+        return sum / nodes.length;
+    };
+
+    const avgA = getAvg("#leftDropArea .card");
+    const avgB = getAvg("#rightDropArea .card");
+    const testBPM = currentTest.bpm;
+
+    // Decision: Who is closer?
+    const distA = Math.abs(testBPM - avgA);
+    const distB = Math.abs(testBPM - avgB);
+    
+    const winnerArea = distA < distB ? "leftDropArea" : "rightDropArea";
+    const winnerZone = distA < distB ? "leftZone" : "rightZone";
+    const target = document.getElementById(winnerArea);
+    const card = document.getElementById("testCard");
+
+    // Animate
+    const targetRect = target.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const dx = targetRect.left - cardRect.left + 20;
+    const dy = targetRect.top - cardRect.top + 20;
+
+    card.style.transition = 'transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+    card.style.transform = `translate(${dx}px, ${dy}px)`;
+
+    setTimeout(() => {
+        target.appendChild(card);
+        card.style.transform = "none";
+        document.getElementById(winnerZone).classList.add("highlight");
+        
+        let html = `
+            <p>The AI analyzed your patterns:</p>
+            <ul>
+                <li><b>Box A Average:</b> ${Math.round(avgA)} BPM</li>
+                <li><b>Box B Average:</b> ${Math.round(avgB)} BPM</li>
+            </ul>
+            <p>The new song <b>(${testBPM} BPM)</b> is mathematically closer to <b>Box ${distA < distB ? 'A' : 'B'}</b>.</p>
+            <p><i>Lesson: You created the "Classes," and the AI used a <b>Nearest Centroid</b> algorithm to match the new data to your patterns.</i></p>
+        `;
+        document.getElementById("aiExplanation").innerHTML = html;
+        document.getElementById("modal").style.display = "block";
+    }, 600);
+}
+
+function resetGame(){
+    // Clear zones
+    document.getElementById("leftDropArea").innerHTML = "";
+    document.getElementById("rightDropArea").innerHTML = "";
+    document.getElementById("leftZone").classList.remove("highlight");
+    document.getElementById("rightZone").classList.remove("highlight");
+    
+    // Clear UI elements
+    const testCard = document.getElementById("testCard");
+    if(testCard) testCard.remove();
+    
+    document.getElementById("decideBtn").style.display = "none";
+    document.getElementById("testBtn").disabled = false;
+    document.getElementById("message").innerText = "";
+    
+    // Recreate original cards
+    createCards();
+}
+
+function closeModal(){ document.getElementById("modal").style.display = "none"; }
+</script>
+
+</body>
+</html>

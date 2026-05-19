@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Train the AI</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-align: center;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 20px;
+    color: #2c3e50;
+}
+
+.container { margin: 0 auto; max-width: 1100px; }
+
+.card {
+    width: 160px;
+    padding: 10px;
+    margin: 5px;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: grab;
+    display: inline-block;
+    border: 1px solid #d1d8e0;
+    font-size: 0.9em;
+}
+
+.card b { display: block; color: #16a085; }
+.card i { font-size: 0.85em; color: #7f8c8d; }
+
+.zone-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 25px 0;
+}
+
+.zone {
+    width: 450px; /* Wider for two columns */
+    min-height: 300px;
+    border: 3px dashed #7f8c8d;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 15px;
+}
+
+.drop-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two column layout */
+    gap: 10px;
+    min-height: 200px;
+}
+
+button {
+    margin: 5px;
+    padding: 12px 20px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+}
+
+.btn-check { background: #27ae60; color: white; }
+.btn-reset { background: #95a5a6; color: white; }
+.btn-ai { background: #e67e22; color: white; }
+
+.highlight { border-color: #27ae60; background: #eafaf1; }
+
+/* Modals */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.8);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 30px;
+    margin: 5% auto;
+    width: 85%;
+    max-width: 600px;
+    border-radius: 12px;
+    text-align: left;
+}
+
+#testCard { border: 2px solid #e67e22; background: #fff5e6; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>🎧 Advanced Feature Recognition</h2>
+    <p>Train your AI by sorting songs. Try sorting by <b>BPM</b> or by <b>singer's gender</b> to see if the AI detects your logic!</p>
+
+    <div id="cards"></div>
+
+    <div class="zone-container">
+        <div class="zone" id="leftZone">
+            <h4 id="labelA">Box A</h4>
+            <div class="drop-area" id="leftDropArea"></div>
+        </div>
+        <div class="zone" id="rightZone">
+            <h4 id="labelB">Box B</h4>
+            <div class="drop-area" id="rightDropArea"></div>
+        </div>
+    </div>
+
+    <div>
+        <button class="btn-check" onclick="checkTraining()">✅ Check Status</button>
+        <button class="btn-reset" onclick="resetGame()">🔄 Reset</button>
+        <button class="btn-check" id="testBtn" onclick="testAI()">🧪 New Test Song</button>
+    </div>
+
+    <button id="decideBtn" class="btn-ai" style="display:none; margin-top:20px;" onclick="aiDecide()">🤖 Let AI Classify</button>
+
+    <!-- Unified Modal for Check & AI Decision -->
+    <div id="modal" class="modal">
+      <div class="modal-content">
+        <h3 id="modalTitle">Status</h3>
+        <div id="modalBody"></div>
+        <button class="btn-reset" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+</div>
+<br>
+Created by RafaelT using Copilot for brainstorming, Ollama and Gemma4 for prototyping, and Gemini for this final version.
+<script>
+const trainingData = [
+    {name:"Espresso", artist:"Sabrina Carpenter", sex:"Female", bpm:110},
+    {name:"Billie Jean", artist:"Michael Jackson", sex:"Male", bpm:117},
+    {name:"Flowers", artist:"Miley Cyrus", sex:"Female", bpm:118},
+    {name:"Paint Town Red", artist:"Doja Cat", sex:"Female", bpm:100},
+    {name:"Cruel Summer", artist:"Taylor Swift", sex:"Female", bpm:170},
+    {name:"Snooze", artist:"SZA", sex:"Female", bpm:70},
+    {name:"Calm Down", artist:"Rema", sex:"Male", bpm:107},
+    {name:"Bohemian Rhapsody", artist:"Queen", sex:"Male", bpm:72},
+    {name:"Bad Habit", artist:"Steve Lacy", sex:"Male", bpm:84},
+    {name:"Fast Car", artist:"Luke Combs", sex:"Male", bpm:98}
+];
+
+const testPool = [
+    {name:"No Woman, No Cry", artist:"Bob Marley", sex:"Male", bpm:78},
+    {name:"Yes, And?", artist:"Ariana Grande", sex:"Female", bpm:125},
+    {name:"Hello", artist:"Adelle", sex:"Female", bpm:70},
+    {name:"Purple rain", artist:"Prince", sex:"Male", bpm:113},
+    {name:"Texas Hold 'Em", artist:"Beyoncé", sex:"Female", bpm:110}
+];
+
+let currentTest = null;
+
+function createCards(){
+    const container = document.getElementById("cards");
+    container.innerHTML = ""; 
+    trainingData.forEach((song, i) => {
+        let c = document.createElement("div");
+        c.className = "card";
+        c.id = `card${i}`;
+        c.innerHTML = `<b>${song.name}</b><i>${song.artist} (${song.sex[0]})</i><b>${song.bpm} BPM</b>`;
+        c.dataset.bpm = song.bpm;
+        c.dataset.sex = song.sex;
+        c.setAttribute('draggable', true);
+        c.ondragstart = (e) => e.dataTransfer.setData("text", e.target.id);
+        container.appendChild(c);
+    });
+}
+
+createCards();
+
+// Drop Logic
+[ 'leftDropArea', 'rightDropArea' ].forEach(id => {
+    const el = document.getElementById(id);
+    el.ondragover = (e) => e.preventDefault();
+    el.ondrop = (e) => {
+        e.preventDefault();
+        const cardId = e.dataTransfer.getData("text");
+        const card = document.getElementById(cardId);
+        if (card) el.appendChild(card);
+    };
+});
+
+function showModal(title, body) {
+    document.getElementById("modalTitle").innerText = title;
+    document.getElementById("modalBody").innerHTML = body;
+    document.getElementById("modal").style.display = "block";
+}
+
+function checkTraining(){
+    const placed = document.querySelectorAll(".drop-area .card").length;
+    if(placed === trainingData.length) {
+        showModal("Training Complete", "<p>All songs have been classified! You can now generate a test song to see if the AI learned your pattern.</p>");
+    } else {
+        showModal("Training in Progress", `<p>You have sorted ${placed} out of ${trainingData.length} songs. Keep going!</p>`);
+    }
+}
+
+function testAI(){
+    if(document.querySelectorAll(".drop-area .card").length < trainingData.length) {
+        alert("Sort all training songs first!"); return;
+    }
+    const old = document.getElementById("testCard");
+    if(old) old.remove();
+
+    currentTest = testPool[Math.floor(Math.random() * testPool.length)];
+    let card = document.createElement("div");
+    card.className = "card";
+    card.id = "testCard";
+    card.innerHTML = `<b>TEST: ${currentTest.name}</b><i>${currentTest.artist} (${currentTest.sex[0]})</i><b>${currentTest.bpm} BPM</b>`;
+    document.querySelector(".container").insertBefore(card, document.querySelector(".zone-container"));
+    
+    document.getElementById("decideBtn").style.display = "inline-block";
+}
+
+function aiDecide(){
+    const leftCards = Array.from(document.querySelectorAll("#leftDropArea .card"));
+    const rightCards = Array.from(document.querySelectorAll("#rightDropArea .card"));
+
+    // Pattern Detection 1: Sex (Categorical)
+    const leftSexes = [...new Set(leftCards.map(c => c.dataset.sex))];
+    const rightSexes = [...new Set(rightCards.map(c => c.dataset.sex))];
+    
+    let decisionReason = "";
+    let winnerId = "";
+
+    // If left is ALL one gender and right is ALL the other
+    if (leftSexes.length === 1 && rightSexes.length === 1 && leftSexes[0] !== rightSexes[0]) {
+        winnerId = (currentTest.sex === leftSexes[0]) ? "leftDropArea" : "rightDropArea";
+        decisionReason = `<b>Feature Identified: Gender.</b> The AI noticed Box A contains only ${leftSexes[0]} artists and Box B contains only ${rightSexes[0]} artists. Since the test song is ${currentTest.sex}, it fits the pattern.`;
+    } 
+    // Default to BPM (Numerical Centroid)
+    else {
+        const avg = (arr) => arr.reduce((a, b) => a + parseInt(b.dataset.bpm), 0) / arr.length;
+        const avgA = avg(leftCards);
+        const avgB = avg(rightCards);
+        
+        winnerId = Math.abs(currentTest.bpm - avgA) < Math.abs(currentTest.bpm - avgB) ? "leftDropArea" : "rightDropArea";
+        decisionReason = `<b>Feature Identified: BPM (Nearest Centroid).</b> The AI couldn't find a perfect categorical split, 
+        so it calculated the average BPM. <br>Box A Avg: ${Math.round(avgA)} | Box B Avg: ${Math.round(avgB)}.<br>The test 
+        song (${currentTest.bpm}) is closer to Box ${winnerId.includes('left') ? 'A' : 'B'}.`;
+    }
+
+    // Animation
+    const target = document.getElementById(winnerId);
+    const card = document.getElementById("testCard");
+    const targetRect = target.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+
+    card.style.transition = 'transform 0.6s ease-out';
+    card.style.transform = `translate(${targetRect.left - cardRect.left + 20}px, ${targetRect.top - cardRect.top + 20}px)`;
+
+    setTimeout(() => {
+        target.appendChild(card);
+        card.style.transform = "none";
+        target.parentElement.classList.add("highlight");
+        
+        const lesson = `
+            <hr>
+            <h4>🎓 Lesson Learned</h4>
+            <p>Your sorting acted as <b>Training Labels</b>. 
+            The model was trained by scanning the features (BPM and Gender) of the cards in each box.</p>
+            <p>This is a <b>Classification Model</b>. It looked for a "Decision Boundary"—a clear line that separates the two groups. 
+                When you sort by gender, it finds a hard boundary. When you sort by BPM, it calculates a statistical center.</p>
+        `;
+        showModal("🤖 AI Decision", decisionReason + lesson);
+    }, 600);
+}
+
+function resetGame(){
+    document.getElementById("leftDropArea").innerHTML = "";
+    document.getElementById("rightDropArea").innerHTML = "";
+    document.querySelectorAll(".zone").forEach(z => z.classList.remove("highlight"));
+    const tc = document.getElementById("testCard"); if(tc) tc.remove();
+    document.getElementById("decideBtn").style.display = "none";
+    createCards();
+}
+
+function closeModal(){ document.getElementById("modal").style.display = "none"; }
+</script>
+
+</body>
+</html>

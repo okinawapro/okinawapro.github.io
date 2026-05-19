@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logic Maze: Algorithm Solver</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; }
+        #app-container { display: flex; gap: 20px; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); margin-top: 20px; }
+        #side-panel { width: 300px; display: flex; flex-direction: column; gap: 10px; }
+        textarea { width: 100%; height: 180px; border: 2px solid #cbd5e0; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 14px; resize: none; }
+        #history-box { background: #edf2f7; color: #2d3748; height: 150px; font-size: 12px; }
+        button { padding: 12px; cursor: pointer; border: none; border-radius: 8px; font-weight: bold; transition: 0.2s; }
+        .btn-solver { background: #805ad5; color: white; }
+        .btn-solver:hover { background: #6b46c1; }
+        .btn-reset { background: #edf2f7; color: #4a5568; }
+        #maze-svg { border: 5px solid #2d3748; background: white; border-radius: 4px; }
+        .status { font-size: 14px; font-weight: bold; color: #4a5568; }
+    </style>
+</head>
+<body>
+
+    <h1>The Auto-Solver Algorithm 🤖</h1>
+
+    <div id="app-container">
+        <div id="side-panel">
+            <div class="status">Step History (The Stack):</div>
+            <textarea id="history-box" readonly placeholder="The solver will record steps here..."></textarea>
+            
+            <button class="btn-solver" onclick="startAutoSolver()">▶ Run Auto-Solver</button>
+            <button class="btn-reset" onclick="resetGame()">Reset Maze</button>
+            
+            <div style="font-size: 12px; color: #718096; line-height: 1.4;">
+                <b>Backtracking:</b> The solver explores paths. If it gets stuck, it reads the history and moves backward to the last intersection.
+            </div>
+        </div>
+
+        <svg id="maze-svg" width="400" height="400" viewBox="0 0 400 400"></svg>
+    </div>
+
+    <script>
+        const GRID_SIZE = 10, CELL_SIZE = 40;
+        const svg = document.getElementById('maze-svg');
+        const historyBox = document.getElementById('history-box');
+        
+        let playerPos = { x: 0, y: 0 };
+        let maze = [];
+        let visited = new Set();
+        let pathStack = []; // To keep track of the route for backtracking
+
+        function generateMaze() {
+            maze = Array.from({ length: GRID_SIZE }, () => Array.from({ length: GRID_SIZE }, () => ({ n: true, s: true, e: true, w: true, visited: false })));
+            let stack = [[0, 0]];
+            maze[0][0].visited = true;
+            while (stack.length > 0) {
+                let [x, y] = stack[stack.length - 1];
+                let neighbors = [];
+                if (y > 0 && !maze[y-1][x].visited) neighbors.push([x, y-1, 'n', 's']);
+                if (y < GRID_SIZE-1 && !maze[y+1][x].visited) neighbors.push([x, y+1, 's', 'n']);
+                if (x > 0 && !maze[y][x-1].visited) neighbors.push([x-1, y, 'w', 'e']);
+                if (x < GRID_SIZE-1 && !maze[y][x+1].visited) neighbors.push([x+1, y, 'e', 'w']);
+                if (neighbors.length > 0) {
+                    let [nx, ny, dir, opp] = neighbors[Math.floor(Math.random() * neighbors.length)];
+                    maze[y][x][dir] = false; maze[ny][nx][opp] = false;
+                    maze[ny][nx].visited = true; stack.push([nx, ny]);
+                } else stack.pop();
+            }
+            render();
+        }
+
+        function render() {
+            svg.innerHTML = '';
+            // Goal
+            const exit = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            exit.setAttribute("x", 360); exit.setAttribute("y", 360); exit.setAttribute("width", 40); exit.setAttribute("height", 40); exit.setAttribute("fill", "#c6f6d5"); svg.appendChild(exit);
+
+            // Path highlight (visualize where the solver has been)
+            visited.forEach(key => {
+                const [vx, vy] = key.split(',').map(Number);
+                const r = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                r.setAttribute("x", vx * 40); r.setAttribute("y", vy * 40);
+                r.setAttribute("width", 40); r.setAttribute("height", 40);
+                r.setAttribute("fill", "#ebf4ff"); svg.appendChild(r);
+            });
+
+            for (let y = 0; y < GRID_SIZE; y++) {
+                for (let x = 0; x < GRID_SIZE; x++) {
+                    const pX = x * 40, pY = y * 40;
+                    if (maze[y][x].n) drawL(pX, pY, pX+40, pY);
+                    if (maze[y][x].s) drawL(pX, pY+40, pX+40, pY+40);
+                    if (maze[y][x].e) drawL(pX+40, pY, pX+40, pY+40);
+                    if (maze[y][x].w) drawL(pX, pY, pX, pY+40);
+                }
+            }
+            const char = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            char.setAttribute("x", playerPos.x * 40 + 20); char.setAttribute("y", playerPos.y * 40 + 30);
+            char.setAttribute("font-size", "24"); char.setAttribute("text-anchor", "middle");
+            char.textContent = (playerPos.x === 9 && playerPos.y === 9) ? "😊" : "🤖";
+            svg.appendChild(char);
+        }
+
+        function drawL(x1, y1, x2, y2) {
+            const l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2);
+            l.setAttribute("stroke", "#2d3748"); l.setAttribute("stroke-width", "2"); svg.appendChild(l);
+        }
+
+        function logStep(msg) {
+            historyBox.value = msg + "\n" + historyBox.value;
+        }
+
+        async function startAutoSolver() {
+            visited.clear();
+            pathStack = [];
+            playerPos = { x: 0, y: 0 };
+            historyBox.value = "";
+            
+            await solve();
+        }
+
+        async function solve() {
+            const directions = [
+                { name: 'right', dx: 1, dy: 0, wall: 'e' },
+                { name: 'down', dx: 0, dy: 1, wall: 's' },
+                { name: 'left', dx: -1, dy: 0, wall: 'w' },
+                { name: 'up', dx: 0, dy: -1, wall: 'n' }
+            ];
+
+            visited.add(`${playerPos.x},${playerPos.y}`);
+
+            while (playerPos.x !== 9 || playerPos.y !== 9) {
+                let moved = false;
+                const currentCell = maze[playerPos.y][playerPos.x];
+
+                for (let d of directions) {
+                    let nx = playerPos.x + d.dx;
+                    let ny = playerPos.y + d.dy;
+
+                    // Check if path is clear and not visited
+                    if (!currentCell[d.wall] && !visited.has(`${nx},${ny}`)) {
+                        // Move forward
+                        pathStack.push({ x: playerPos.x, y: playerPos.y, dir: d.name });
+                        playerPos.x = nx;
+                        playerPos.y = ny;
+                        visited.add(`${nx},${ny}`);
+                        logStep(`Moved ${d.name} to ${nx},${ny}`);
+                        moved = true;
+                        break;
+                    }
+                }
+
+                if (!moved) {
+                    // Dead end! Backtrack
+                    if (pathStack.length === 0) {
+                        logStep("No solution found.");
+                        return;
+                    }
+                    let lastStep = pathStack.pop();
+                    logStep(`Dead end! Backtracking from ${playerPos.x},${playerPos.y}`);
+                    playerPos.x = lastStep.x;
+                    playerPos.y = lastStep.y;
+                }
+
+                render();
+                await new Promise(r => setTimeout(r, 100));
+            }
+            logStep("GOAL REACHED! 😊");
+        }
+
+        function resetGame() {
+            playerPos = { x: 0, y: 0 };
+            visited.clear();
+            pathStack = [];
+            historyBox.value = "";
+            generateMaze();
+        }
+
+        generateMaze();
+    </script>
+</body>
+</html>
