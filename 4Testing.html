@@ -35,6 +35,9 @@ button {
 .check { background: #0ea5e9; }
 .solve { background: #4b5563; }
 .reset { background: #64748b; }
+.lessons { background: #69a46d; }
+
+
 textarea {
   width: 100%;
   margin-top: 10px;
@@ -92,6 +95,37 @@ textarea {
  background: #fecaca;
 }
 
+  /* ===== LESSON MODAL ===== */
+  .modal-bg {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+
+  .modal-box {
+    background: white;
+    width: 650px;
+    max-height: 80vh;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal-content {
+    overflow-y: auto;   /* ✅ SCROLL BAR */
+    padding-right: 10px;
+    line-height: 1.5;
+  }
+
+  .close-btn {
+    margin-top: 10px;
+    background: #dc2626;
+  }
 
 </style>
 </head>
@@ -166,68 +200,84 @@ textarea {
     <li>Which bug seemed small but became dangerous?</li>
     <li>Why can’t testing be postponed until the end?</li>
   </ul>
-
-  <h2>Lessons Learned: Why Testing Matters</h2>
-
-<p>
-Testing is not just a final step—it is a critical process that ensures systems work correctly, safely, and reliably before users depend on them. Each type of testing serves a different purpose and protects against specific risks.
-</p>
-
-<ul>
-
-<li>
-<b>🔹 Unit Testing – “Check the individual parts”</b><br>
-<b>What it involves:</b> Testing a single function, module, or component in isolation.<br>
-<b>Why it matters:</b> Catches small bugs early before they spread.<br>
-<b>Risk if skipped:</b> Tiny mistakes (like duplicate alerts or wrong calculations) can multiply and cause larger system failures.
-</li>
-
-<br>
-
-<li>
-<b>🔹 Integration Testing – “Check how parts work together”</b><br>
-<b>What it involves:</b> Testing how multiple components or systems interact with each other.<br>
-<b>Why it matters:</b> Ensures data flows correctly between modules and systems.<br>
-<b>Risk if skipped:</b> Systems may produce conflicting data (e.g., police vs fire seeing different information).
-</li>
-
-<br>
-
-<li>
-<b>🔹 System Testing – “Check the entire system under real conditions”</b><br>
-<b>What it involves:</b> Testing the complete system as a whole using realistic scenarios and loads.<br>
-<b>Why it matters:</b> Validates performance, reliability, and stability.<br>
-<b>Risk if skipped:</b> The system may crash or fail when it is most needed, especially under heavy load.
-</li>
-
-<br>
-
-<li>
-<b>🔹 Acceptance Testing – “Check if it works for users”</b><br>
-<b>What it involves:</b> Real users test the system to confirm it meets their needs and expectations.<br>
-<b>Why it matters:</b> Ensures the system is understandable, useful, and ready for deployment.<br>
-<b>Risk if skipped:</b> Users reject the system or misuse it, even if technically it works.
-</li>
-
-</ul>
-
-<br>
-
-<p><b>💡 Key Insight:</b><br>
-Each test type builds on the previous one:
-<br><br>
-🧩 Unit → 🔗 Integration → 🖥 System → 👥 Acceptance
-<br><br>
-Skipping any layer creates blind spots where problems can grow and reach real users.
-</p>
-
-<p>
-<b>⚠️ Bottom Line:</b><br>
-Testing is not a delay—it is protection. The earlier a problem is found, the cheaper and easier it is to fix. 
-When testing is skipped, problems don’t disappear—they move into production where they become more dangerous, more expensive, and harder to fix.
-</p>
-
+  <button class="lessons" onclick="openLessons()">Lessons Learned</button>
 </div>
+
+
+<div id="lessonModal" style="display:none;">
+  <div class="modal-bg">
+    <div class="modal-box">
+
+      <div class="modal-content">
+          <h2>Lessons Learned: Why Testing Matters</h2>
+
+        <p>
+        Testing is not just a final step—it is a critical process that ensures systems work correctly, safely, and reliably before users depend on them. Each type of testing serves a different purpose and protects against specific risks.
+        </p>
+
+        <ul>
+
+        <li>
+        <b>Unit Testing – “Check the individual parts”</b><br>
+        <b>What it involves:</b> Testing a single function, module, or component in isolation.<br>
+        <b>Why it matters:</b> Catches small bugs early.<br>
+        <b>Risk if skipped:</b> Tiny mistakes (like duplicate alerts or wrong calculations) can multiply and cause larger system failures.
+        </li>
+
+        <br>
+
+        <li>
+        <b>Integration Testing – “Check how parts work together”</b><br>
+        <b>What it involves:</b> Testing how multiple components or systems interact with each other.<br>
+        <b>Why it matters:</b> Ensures data flows correctly between modules and systems.<br>
+        <b>Risk if skipped:</b> Systems may produce conflicting data (e.g., police vs fire seeing different information).
+        </li>
+
+        <br>
+
+        <li>
+        <b>System Testing – “Check the entire system under real conditions”</b><br>
+        <b>What it involves:</b> Testing the complete system as a whole using realistic scenarios and loads.<br>
+        <b>Why it matters:</b> Validates performance, reliability, and stability.<br>
+        <b>Risk if skipped:</b> The system may crash or fail when it is most needed, especially under heavy load.
+        </li>
+
+        <br>
+
+        <li>
+        <b>Acceptance Testing – “Check if it works for users”</b><br>
+        <b>What it involves:</b> Real users test the system to confirm it meets their needs and expectations.<br>
+        <b>Why it matters:</b> Ensures the system is understandable, useful, and ready for deployment.<br>
+        <b>Risk if skipped:</b> Users reject the system or misuse it, even if technically it works.
+        </li>
+
+        </ul>
+
+        <br>
+
+        <p><b>💡 Key Insight:</b><br>
+        Each test type builds on the previous one:
+        <br><br>
+        🧩 Unit → 🔗 Integration → 🖥 System → 👥 Acceptance
+        <br><br>
+        Skipping any layer creates blind spots where problems can grow and reach real users.
+        </p>
+
+        <p>
+        <b>⚠️ Bottom Line:</b><br>
+        Testing is not a delay—it is protection. The earlier a problem is found, the cheaper and easier it is to fix. 
+        When testing is skipped, problems don’t disappear—they move into production where they become more dangerous, more expensive, and harder to fix.
+        </p>
+
+      </div>
+
+      <button class="close-btn" onclick="closeLessons()">Close</button>
+
+    </div>
+  </div>
+</div>
+
+
 
 <script>
 function shuffle(arr) {
@@ -383,6 +433,15 @@ function solveConsequences() {
 function resetConsequences() {
  initConsequences();
 }
+
+function openLessons() {
+  document.getElementById("lessonModal").style.display = "block";
+}
+
+function closeLessons() {
+  document.getElementById("lessonModal").style.display = "none";
+}
+
 loadTests();
 </script>
 </body>
