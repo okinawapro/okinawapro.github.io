@@ -96,11 +96,52 @@
     .check { background: #16a34a; }
     .solve { background: #4b5563; }
     .reset { background: #64748b; }
+    .lessons { background: #77b0ff; }
 
     .result {
       font-weight: bold;
       margin-top: 10px;
     }
+
+/* LESSONS MODAL */
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+}
+
+.modal {
+  background: white;
+  width: 600px;
+  max-height: 80vh;
+  border-radius: 10px;
+  padding: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+  .modal h2 {
+    margin-top: 0;
+  }
+
+  .modal-content {
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 10px;
+    line-height: 1.4;
+  }
+
+  .close-btn {
+    background: #dc2626;
+    margin-top: 10px;
+  }
+
+
 
     /* SUCCESS OVERLAY */
     .overlay {
@@ -151,6 +192,7 @@
     <button class="check" onclick="checkAnswers()">Check</button>
     <button class="solve" onclick="solve()">Solve</button>
     <button class="reset" onclick="resetAll()">Reset</button>
+    <button class="lessons" onclick="openLessons()">Lessons Learned</button>
   </div>
 
   <div class="result" id="result"></div>
@@ -163,6 +205,51 @@
       </div>
     </div>
   </div>
+
+  <div id="lessonsModal" style="display:none;">
+    <div class="modal-bg">
+      <div class="modal">
+        <h2>Lessons Learned: SDLC Breakdown</h2>
+        <div class="modal-content">
+
+          <h3>1. Requirements Analysis</h3>
+          <p><strong>Activity:</strong> Involve emergency responders to validate real-time requirements</p>
+          <p><strong>Why it belongs here:</strong> Requirements phase defines WHAT the system must do. If responders aren't involved, the system misses critical real-world needs like alert timing and coordination.</p>
+          <p><strong>Failure impact:</strong> Missing alerts happened because real users were not consulted.</p>
+
+          <h3>2. System Design</h3>
+          <p><strong>Activity:</strong> Create failover and scalability architecture diagrams</p>
+          <p><strong>Why it belongs here:</strong> Design determines HOW the system handles load and failures. Scalability and redundancy must be architected before coding begins.</p>
+          <p><strong>Failure impact:</strong> System crashed under heavy load due to weak architecture.</p>
+
+          <h3>3. Development</h3>
+          <p><strong>Activity:</strong> Use version control and code reviews</p>
+          <p><strong>Why it belongs here:</strong> Development is where code is built. Version control and peer review ensure stability, collaboration, and fewer defects.</p>
+          <p><strong>Failure impact:</strong> Inconsistent behavior likely came from poor coding practices.</p>
+
+          <h3>4. Testing</h3>
+          <p><strong>Activity:</strong> Run load and integration tests with simulated disasters</p>
+          <p><strong>Why it belongs here:</strong> Testing validates the system under real conditions. Disaster simulations ensure the system performs under stress.</p>
+          <p><strong>Failure impact:</strong> The system failed in real crises because it wasn’t tested in realistic scenarios.</p>
+
+          <h3>5. Deployment</h3>
+          <p><strong>Activity:</strong> Stage rollout with rollback plan</p>
+          <p><strong>Why it belongs here:</strong> Deployment introduces the system safely. Rollback plans allow recovery if things go wrong.</p>
+          <p><strong>Failure impact:</strong> The rushed rollout caused widespread disruption without safety nets.</p>
+
+          <h3>6. Operations & Maintenance</h3>
+          <p><strong>Activity:</strong> Establish 24/7 monitoring and incident response</p>
+          <p><strong>Why it belongs here:</strong> This phase ensures ongoing system health. Monitoring detects issues early and enables rapid fixes.</p>
+          <p><strong>Failure impact:</strong> Problems escalated because no real-time monitoring or response team existed.</p>
+
+        </div>
+
+        <button class="close-btn" onclick="closeLessons()">Close</button>
+      </div>
+    </div>
+  </div>
+
+
 </div>
 
 <script>
@@ -235,39 +322,47 @@ function render() {
   });
 }
 
-function checkAnswers() {
-  document.querySelectorAll('.card.placed').forEach(card => {
-    card.classList.remove('correct', 'incorrect');
-  });
-
-  let allCorrect = true;
-
-  phases.forEach(phase => {
-    document.querySelectorAll('.phase').forEach(phaseDiv => {
-      if (phaseDiv.querySelector('h3').textContent === phase) {
-        phaseDiv.querySelectorAll('.card').forEach(cardEl => {
-          const fix = fixes.find(f => f.text === cardEl.textContent);
-          if (fix && fix.correct === phase) {
-            cardEl.classList.add('correct');
-          } else {
-            cardEl.classList.add('incorrect');
-            allCorrect = false;
-          }
-        });
-      }
+  function checkAnswers() {
+    document.querySelectorAll('.card.placed').forEach(card => {
+      card.classList.remove('correct', 'incorrect');
     });
-  });
 
-  if (allCorrect) {
-    document.getElementById("overlay").style.display = "block";
-    setTimeout(() => {
-      document.getElementById("overlay").style.display = "none";
-    }, 3000);
-  } else {
-    document.getElementById("result").textContent = "Review highlighted cards and try again.";
+    let allCorrect = true;
+
+    // ✅ NEW: ensure ALL cards are placed
+    if (Object.keys(placements).length !== fixes.length) {
+      document.getElementById("result").textContent =
+        "Place all cards before checking!";
+      return;
+    }
+
+    phases.forEach(phase => {
+      document.querySelectorAll('.phase').forEach(phaseDiv => {
+        if (phaseDiv.querySelector('h3').textContent === phase) {
+          phaseDiv.querySelectorAll('.card').forEach(cardEl => {
+            const fix = fixes.find(f => f.text === cardEl.textContent);
+
+            if (fix && fix.correct === phase) {
+              cardEl.classList.add('correct');
+            } else {
+              cardEl.classList.add('incorrect');
+              allCorrect = false;
+            }
+          });
+        }
+      });
+    });
+
+    if (allCorrect) {
+      document.getElementById("overlay").style.display = "block";
+      setTimeout(() => {
+        document.getElementById("overlay").style.display = "none";
+      }, 3000);
+    } else {
+      document.getElementById("result").textContent =
+        "Review highlighted cards and try again.";
+    }
   }
-}
-
 function solve() {
   fixes.forEach(f => placements[f.id] = f.correct);
   render();
@@ -276,6 +371,14 @@ function solve() {
 function resetAll() {
   placements = {};
   render();
+}
+
+function openLessons() {
+  document.getElementById("lessonsModal").style.display = "block";
+}
+
+function closeLessons() {
+  document.getElementById("lessonsModal").style.display = "none";
 }
 
 render();
