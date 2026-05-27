@@ -98,6 +98,41 @@ button{
   max-width:650px;
 }
 
+  /* LESSON MODAL */
+  #lessonsModal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.75);
+    align-items:center;
+    justify-content:center;
+    z-index:10000;
+  }
+
+  .lessonsBox {
+    background:#0b1220;
+    padding:20px;
+    border-radius:12px;
+    width:90%;
+    max-width:700px;
+    max-height:85vh;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .lessonsContent {
+    overflow-y:auto;   /* ✅ SCROLLBAR */
+    padding-right:10px;
+    line-height:1.5;
+  }
+
+  .closeLessons {
+    margin-top:10px;
+    background:#ef4444;
+    color:white;
+  }
+
 /* 🎉 SUCCESS OVERLAY */
 #success{
   display:none;
@@ -190,6 +225,7 @@ A ticket site gets spikes when events go on sale
 <button class="check" onclick="check()">Check</button>
 <button class="solve" onclick="solve()">Solve</button>
 <button class="reset" onclick="resetGame()">Reset</button>
+<button class="lessons" onclick="openLessons()">📘 Lessons Learned</button>
 </div>
 
 <!-- RESULT MODAL -->
@@ -207,6 +243,109 @@ A ticket site gets spikes when events go on sale
 🎉 Perfect! All correct!
 </div>
 
+  <div id="lessonsModal">
+    <div class="lessonsBox">
+
+      <h2>📘 Lessons Learned: Server vs Serverless</h2>
+
+      <div class="lessonsContent">
+
+        <h3>🔍 Core Idea</h3>
+        <p>
+        The difference is NOT where the system runs — it’s 
+        <b>how predictable the workload is</b>.
+        </p>
+
+        <hr>
+
+        <h3>🏢 Server / On‑Prem Systems</h3>
+        <p><b>Used when systems are:</b></p>
+        <ul>
+          <li>Always running (banks, hospitals)</li>
+          <li>Predictable usage (schools, internal systems)</li>
+          <li>Require full control and stability</li>
+        </ul>
+
+        <p><b>Why these cards belong here:</b></p>
+        <ul>
+          <li>ATM system → must always be available</li>
+          <li>Hospital records → continuous access required</li>
+          <li>School system → consistent daily usage</li>
+          <li>Company email → always-on infrastructure</li>
+          <li>Video game servers → persistent world/state</li>
+        </ul>
+
+        <p><b>⚠️ Tradeoff:</b> You pay for capacity even when usage is low.</p>
+
+        <hr>
+
+        <h3>☁️ Serverless / Cloud Systems</h3>
+        <p><b>Used when systems are:</b></p>
+        <ul>
+          <li>Event-driven (only run when needed)</li>
+          <li>Highly variable or unpredictable</li>
+          <li>Spike-heavy workload patterns</li>
+        </ul>
+
+        <p><b>Why these cards belong here:</b></p>
+        <ul>
+          <li>Viral website → sudden traffic spikes</li>
+          <li>Photo upload app → runs only on uploads</li>
+          <li>Holiday shopping → burst demand</li>
+          <li>Chatbot → used intermittently</li>
+          <li>Ticket sales → massive short spikes</li>
+        </ul>
+
+        <p><b>⚠️ Tradeoff:</b> Less control, and costs can spike under heavy use.</p>
+
+        <hr>
+
+        <h3>⚡ Decision Rule (Critical Thinking Shortcut)</h3>
+        <p>
+        Use this simple rule:
+        </p>
+
+        <ul>
+          <li><b>Steady, always-on workload → Server</b></li>
+          <li><b>Unpredictable or event-based → Serverless</b></li>
+        </ul>
+
+        <hr>
+
+        <h3>🧠 Real-World Insight</h3>
+        <p>
+        Most real systems use a <b>hybrid approach</b>:
+        </p>
+        <ul>
+          <li>Core systems → servers (stable)</li>
+          <li>Spikes & events → serverless (scalable)</li>
+        </ul>
+
+        <p>
+        This balances <b>cost, performance, and flexibility</b>.
+        </p>
+
+        <hr>
+
+        <h3>⚠️ Bottom Line</h3>
+        <p>
+        Choosing the wrong model leads to:
+        </p>
+        <ul>
+          <li>🚨 Overspending (serverless misuse)</li>
+          <li>🚨 Overprovisioning (server misuse)</li>
+        </ul>
+
+        <p>
+        <b>The key decision is not location — it’s workload behavior.</b>
+        </p>
+
+      </div>
+
+      <button class="closeLessons" onclick="closeLessons()">Close</button>
+
+    </div>
+  </div>
 <script>
 
 let dragged=null;
@@ -310,6 +449,13 @@ function closeModal(){
 document.getElementById("modal").style.display="none";
 }
 
+function openLessons() {
+  document.getElementById("lessonsModal").style.display = "flex";
+}
+
+function closeLessons() {
+  document.getElementById("lessonsModal").style.display = "none";
+}
 </script>
 
 </body>
