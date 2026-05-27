@@ -96,6 +96,39 @@ button:hover { background: #1d4ed8; }
   .container { grid-template-columns: 1fr; }
 }
 
+/* ===== LESSONS MODAL ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.modal-box {
+  background: white;
+  width: 650px;
+  max-height: 80vh;
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content {
+  overflow-y: auto;   /* ✅ SCROLLBAR */
+  margin-top: 10px;
+  padding-right: 8px;
+  line-height: 1.5;
+}
+
+.close-btn {
+  margin-top: 12px;
+  background: #ef4444;
+}
+
 /* ===== CONFETTI ===== */
 .confetti {
   position: fixed;
@@ -130,8 +163,69 @@ button:hover { background: #1d4ed8; }
     <button onclick="score()">Score My Decisions</button>
     <button onclick="initializeGame()">Reset</button>
     <button onclick="solveChallenge()">Solve</button>
+    <button onclick="openLessons()">Lessons Learned</button>
+
 
     <div id="results" class="result"></div>
+  </div>
+</div>
+
+<div id="lessonsModal" style="display:none;">
+  <div class="modal-overlay">
+    <div class="modal-box">
+      <h2>Lessons Learned: SDLC Diagnostic Breakdown</h2>
+
+      <div class="modal-content">
+
+        <h3>Planning Phase</h3>
+        <p><strong>Problems:</strong> Uncontrolled scope creep, No feasibility analysis</p>
+        <p><strong>Solutions:</strong> Formal change control, Feasibility & risk assessment</p>
+        <p><strong>Why:</strong> Planning defines scope, cost, and viability. Without control, projects expand endlessly and miss deadlines.</p>
+        <p><strong>Lesson:</strong> If you don’t control scope early, the project controls you.</p>
+
+        <hr>
+
+        <h3>Analysis Phase</h3>
+        <p><strong>Problems:</strong> Conflicting requirements, Incomplete requirements</p>
+        <p><strong>Solutions:</strong> Requirements workshops, Validated requirements doc</p>
+        <p><strong>Why:</strong> Analysis ensures everyone agrees on what the system should do. Misalignment here leads to rework and failure.</p>
+        <p><strong>Lesson:</strong> You can’t build the right system if you don’t agree on the problem.</p>
+
+        <hr>
+
+        <h3>Design Phase</h3>
+        <p><strong>Problems:</strong> Unclear UX, No user input</p>
+        <p><strong>Solutions:</strong> Wireframes & flows, Usability reviews</p>
+        <p><strong>Why:</strong> Design defines how users interact with the system. Ignoring usability leads to confusion and rejection.</p>
+        <p><strong>Lesson:</strong> A system that works technically can still fail if users hate it.</p>
+
+        <hr>
+
+        <h3>Implementation (Development) Phase</h3>
+        <p><strong>Problems:</strong> Insufficient testing, Rushed deployment</p>
+        <p><strong>Solutions:</strong> Structured testing, Phased rollout</p>
+        <p><strong>Why:</strong> This phase builds and delivers the system. Skipping testing or rushing releases creates unstable systems.</p>
+        <p><strong>Lesson:</strong> Fast delivery without testing leads to faster failure.</p>
+
+        <hr>
+
+        <h3>Big Picture Insight</h3>
+        <p>
+        Every card in this exercise maps to a specific SDLC phase because each phase solves a different type of risk:
+        </p>
+        <ul>
+          <li><strong>Planning:</strong> "Should we build it?"</li>
+          <li><strong>Analysis:</strong> "What exactly are we building?"</li>
+          <li><strong>Design:</strong> "How will it work?"</li>
+          <li><strong>Implementation:</strong> "Build and release it correctly"</li>
+        </ul>
+
+        <p><strong>Core Takeaway:</strong> When a system fails, it’s almost always because one phase was skipped, rushed, or done poorly.</p>
+
+      </div>
+
+      <button class="close-btn" onclick="closeLessons()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -378,6 +472,14 @@ function launchConfetti() {
     // Auto‑cleanup
     setTimeout(() => confetti.remove(), 4000);
   }
+}
+
+function openLessons() {
+  document.getElementById('lessonsModal').style.display = 'block';
+}
+
+function closeLessons() {
+  document.getElementById('lessonsModal').style.display = 'none';
 }
 
 
