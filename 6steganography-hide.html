@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Steganography Encoder Lab</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #1a1a1d;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+}
+
+h1 {
+    color: #00bcd4;
+}
+
+.container {
+    background: #252529;
+    padding: 25px;
+    border-radius: 10px;
+    max-width: 700px;
+    margin: auto;
+}
+
+input, textarea, button {
+    margin: 10px;
+    padding: 10px;
+    font-size: 16px;
+    border-radius: 6px;
+    border: none;
+}
+
+textarea {
+    width: 90%;
+    height: 80px;
+}
+
+button {
+    background: #00bcd4;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #00acc1;
+}
+
+canvas {
+    margin-top: 15px;
+    max-width: 100%;
+    border: 2px solid #333;
+}
+
+#downloadLink {
+    display: none;
+    margin-top: 15px;
+    color: #00ff00;
+    font-weight: bold;
+}
+</style>
+
+</head>
+<body>
+
+<h1>Steganography Encoder Lab</h1>
+
+<div class="container">
+    <input type="file" id="imageInput" accept="image/*"><br>
+
+    <textarea id="messageInput" placeholder="Type hidden message here..."></textarea><br>
+
+    <button id="encodeBtn">ENCODE MESSAGE</button>
+
+    <br>
+    <canvas id="canvas"></canvas>
+
+    <br>
+    <a id="downloadLink" download="stego-image.png">Download Encoded Image</a>
+</div>
+
+<script>
+const imageInput = document.getElementById('imageInput');
+const messageInput = document.getElementById('messageInput');
+const encodeBtn = document.getElementById('encodeBtn');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const downloadLink = document.getElementById('downloadLink');
+
+let loadedImage = null;
+
+// Load image
+imageInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    const img = new Image();
+
+    img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.drawImage(img, 0, 0);
+        loadedImage = img;
+    };
+
+    img.src = URL.createObjectURL(file);
+});
+
+// Convert message to binary
+function textToBinary(text) {
+    let binary = "";
+
+    for (let i = 0; i < text.length; i++) {
+        let bin = text.charCodeAt(i).toString(2).padStart(8, '0');
+        binary += bin;
+    }
+
+    // Add NULL terminator
+    binary += "00000000";
+
+    return binary;
+}
+
+// Encode message into BLUE LSB
+encodeBtn.addEventListener('click', () => {
+    if (!loadedImage) {
+        alert("Please upload an image first.");
+        return;
+    }
+
+    const message = messageInput.value;
+    const binary = textToBinary(message);
+
+    let imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    let data = imageData.data;
+
+    let bitIndex = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+        if (bitIndex >= binary.length) break;
+
+        let blue = data[i + 2];
+
+        // Clear LSB and set new bit
+        data[i + 2] = (blue & 254) | parseInt(binary[bitIndex]);
+
+        bitIndex++;
+    }
+
+    ctx.putImageData(imageData, 0, 0);
+
+    // Enable download
+    const dataURL = canvas.toDataURL("image/png");
+    downloadLink.href = dataURL;
+    downloadLink.style.display = "inline";
+
+    alert("Message successfully hidden!");
+});
+</script>
+
+</body>
+</html>
