@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Santa's Server Squeeze: Cloud Architecture Trainer</title>
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --panel-color: #16213e;
+            --accent-color: #e94560;
+            --text-color: #ffffff;
+            --success-color: #4ecc71;
+            --info-color: #3498db;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-titles h1 { margin: 0; color: var(--accent-color); text-shadow: 2px 2px #000; font-size: 1.8rem; }
+        .header-titles p { margin: 3px 0; color: #ccc; font-size: 0.9rem; }
+
+        #btn-lessons {
+            background-color: var(--info-color);
+            width: auto;
+            white-space: nowrap;
+            padding: 8px 16px;
+            margin-top: 0;
+            font-size: 0.9rem;
+        }
+
+        #game-container {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .panel {
+            background-color: var(--panel-color);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Stat Boxes with fully dynamic border transitions */
+        .stat-box {
+            background: rgba(0,0,0,0.2);
+            padding: 8px 12px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--success-color); /* Defaults to Green */
+            font-size: 0.9rem;
+            transition: border-left-color 0.4s ease;
+        }
+        .stat-box.border-red { border-left-color: var(--accent-color); }
+        .stat-box.border-green { border-left-color: var(--success-color); }
+
+        .progress-bar {
+            background-color: #333;
+            border-radius: 10px;
+            height: 14px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+        #frustration-fill { background-color: var(--accent-color); }
+        #time-fill { background-color: var(--info-color); }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 0.95rem;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 8px;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover { filter: brightness(1.2); }
+        button:disabled { background-color: #555; cursor: not-allowed; opacity: 0.5; }
+
+        /* Infrastructure Canvas Area */
+        #architecture-canvas {
+            display: grid;
+            grid-template-rows: 60px 70px 1fr;
+            align-items: center;
+            justify-items: center;
+            height: 450px;
+            position: relative;
+            background: radial-gradient(circle, #1f4068 0%, #16213e 100%);
+            border: 2px dashed #0f3460;
+            padding: 10px;
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        #traffic-source-node {
+            grid-row: 1;
+            font-size: 1rem;
+            background: #0f3460;
+            padding: 8px 20px;
+            border-radius: 20px;
+            border: 2px solid var(--info-color);
+        }
+
+        #load-balancer-node {
+            grid-row: 2;
+            background: #f39c12;
+            color: black;
+            padding: 8px 25px;
+            border-radius: 5px;
+            font-weight: bold;
+            display: none;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
+            font-size: 0.9rem;
+        }
+
+        #servers-container {
+            grid-row: 3;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 15px;
+            width: 100%;
+            align-self: start;
+            margin-top: 20px;
+        }
+
+        .server {
+            width: 110px;
+            background: #2e4053;
+            border: 3px solid #34495e;
+            border-radius: 8px;
+            padding: 12px 8px;
+            text-align: center;
+            box-sizing: border-box;
+            position: relative;
+            transition: all 0.3s;
+        }
+        .server.warning { border-color: #f39c12; background: #5d4037; }
+        .server.overloaded { border-color: #e74c3c; animation: shake 0.2s infinite; background: #78281f; }
+        .server.crashed { border-color: #555; background: #222; opacity: 0.6; }
+        
+        .server-label { font-size: 0.75rem; font-weight: bold; margin-bottom: 8px;}
+        .server-bar { background: #111; height: 10px; border-radius: 5px; overflow: hidden; margin-bottom: 4px; }
+        .server-bar-fill { height: 100%; width: 0%; background: var(--success-color); transition: width 0.3s; }
+        .server-stats { font-size: 0.7rem; margin-top: 4px; font-weight: 500; }
+
+        /* Modals & Overlays */
+        #overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        .modal {
+            background: var(--panel-color);
+            padding: 25px;
+            border-radius: 10px;
+            max-width: 500px;
+            text-align: center;
+            border: 2px solid var(--accent-color);
+        }
+        .modal.large-modal {
+            max-width: 800px;
+            text-align: left;
+            max-height: 85vh;
+            overflow-y: auto;
+            border-color: var(--info-color);
+        }
+        .modal h2 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .lesson-section { margin-bottom: 20px; }
+        .lesson-section h4 { color: #f39c12; margin: 8px 0 4px 0; font-size: 1.05rem; }
+        .lesson-section p { color: #e0e0e0; font-size: 0.9rem; line-height: 1.4; margin: 4px 0; }
+        
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            100% { transform: translate(-1px, -2px) rotate(-1deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-titles">
+            <h1>🎄 Santa's Server Squeeze</h1>
+            <p>Keep the toy store online during the Christmas rush!</p>
+        </div>
+        <button id="btn-lessons" onclick="openLessonsModal()">📚 View Lessons Learned</button>
+    </header>
+
+    <div id="game-container">
+        <div class="panel">
+            <h3 id="day-title" style="margin-top:0;">Day 1: On-Prem Chaos</h3>
+            <p id="day-desc" style="font-size:0.8rem; margin-bottom:12px; color:#aaa;">Warning: Keeping servers in the red is high-risk! Frustration starts building early at 85 RPM, and structural failure triggers rapidly past 135 RPM.</p>
+            
+            <div class="stat-box" id="box-traffic">
+                <div>Live Traffic Demand:</div>
+                <strong id="traffic-text" style="font-size: 1.3rem; color: #3498db;">0 RPM</strong>
+            </div>
+
+            <div class="stat-box" id="box-capacity">
+                <div>Total Server Capacity:</div>
+                <strong id="capacity-text" style="font-size: 1.3rem; color: var(--success-color);">0 RPM</strong>
+            </div>
+
+            <div class="stat-box" id="box-frustration">
+                <div>Customer Frustration:</div>
+                <div class="progress-bar"><div id="frustration-fill" class="progress-fill"></div></div>
+            </div>
+
+            <div class="stat-box" id="box-budget">
+                <div>Budget Remaining:</div>
+                <strong id="budget-text" style="font-size: 1.3rem; color: #2ecc71;">$10,000</strong>
+            </div>
+
+            <div class="stat-box" id="box-progress">
+                <div>Day Progress:</div>
+                <div class="progress-bar"><div id="time-fill" class="progress-fill"></div></div>
+            </div>
+
+            <button id="btn-add-server" onclick="addManualServer()">Buy Hardware Server ($1,500)</button>
+            <button id="btn-add-lb" onclick="addLoadBalancer()" style="background-color: #f39c12; color: #000;">Add Load Balancer ($2,000)</button>
+            <button id="btn-cloud-migration" onclick="migrateToCloud()" style="display:none; background-color: #3498db;">Migrate to AWS Cloud ($4,000)</button>
+            
+            <div id="autoscaling-toggle-container" style="display:none; margin-top: 12px; border-top: 1px solid #333; padding-top:8px;">
+                <label style="display: flex; align-items: center; justify-content: space-between; cursor:pointer; font-size:0.9rem;">
+                    <span>🤖 Auto-Scaling (ASG)</span>
+                    <input type="checkbox" id="asg-switch" onchange="toggleASG()" style="transform: scale(1.2);">
+                </label>
+            </div>
+        </div>
+
+        <div class="panel" id="architecture-canvas">
+            <div id="traffic-source-node">🌍 Public Internet Traffic</div>
+            <div id="load-balancer-node">⚖️ Hardware Load Balancer</div>
+            <div id="servers-container"></div>
+        </div>
+    </div>
+
+    <div id="overlay">
+        <div class="modal" id="modal-standard">
+            <h2 id="modal-heading">Welcome to the Toy Rush!</h2>
+            <p id="modal-body">It's late November. You currently have exactly 1 physical, on-premises server rack. It can handle 100 Requests Per Minute (RPM). Watch what happens if you buy a second server without routing traffic to it using a Load Balancer!</p>
+            <button onclick="closeModal()">Start Level</button>
+        </div>
+
+        <div class="modal large-modal" id="modal-lessons" style="display: none;">
+            <h2 style="color: var(--info-color);">📊 Architectural Blueprint: Lessons Learned</h2>
+            
+            <div class="lesson-section">
+                <h4>1. The Load Balancer (Traffic Cop)</h4>
+                <p>When you buy a brand-new server rack, it has its own private IP address. Without a <strong>Load Balancer (LB)</strong> standing in front of your system, your customers continue hitting your main web address (Server 1) directly. The new hardware remains idle at 0% load while Server 1 completely melts down under pressure! An LB serves as a single entry point that distributes incoming workloads evenly.</p>
+            </div>
+
+            <div class="lesson-section">
+                <h4>2. Auto-Scaling Groups (The Automation Engine)</h4>
+                <p>Even with a load balancer, human operators are slow to react to massive viral events or sudden holiday traffic spikes. <strong>Auto-Scaling Groups (ASG)</strong> constantly evaluate system diagnostics (like average CPU usage). When parameters crack critical target thresholds, the cloud fabric automatically hooks new instances up to your load balancer within seconds, saving your engineers from manual infrastructure maintenance emergencies.</p>
+            </div>
+
+            <div class="lesson-section">
+                <h4>3. The False Economy of "Running in the Red" ⚠️</h4>
+                <p>Hoarding operational budget by intentionally letting your servers run near or beyond their capacity (100+ RPM) is a dangerous architectural anti-pattern. In reality, keeping systems continuously red-lined creates massive risks: failures cascade, teams burn out from emergency fire-fighting, and database corruption from sudden crashes instantly wipes out any short-term hardware savings.</p>
+            </div>
+
+            <button onclick="closeLessonsModal()" style="background-color: var(--info-color);">Return to System Simulation</button>
+        </div>
+    </div>
+
+    <script>
+        let currentDay = 1;
+        let traffic = 0;
+        let budget = 10000;
+        let frustration = 0;
+        let elapsedSeconds = 0;
+        const totalDaySeconds = 30; 
+        let gameInterval;
+        let isPaused = false;
+        let trafficTrendCounter = 0;
+
+        let servers = [{ id: 1, capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 }];
+        let hasLoadBalancer = false;
+        let isCloudMode = false;
+        let isASGEnabled = false;
+        const maxCloudServers = 6;
+
+        // UI Selectors
+        const uiTraffic = document.getElementById('traffic-text');
+        const uiCapacity = document.getElementById('capacity-text');
+        const uiFrustration = document.getElementById('frustration-fill');
+        const uiBudget = document.getElementById('budget-text');
+        const uiTime = document.getElementById('time-fill');
+        const uiServersContainer = document.getElementById('servers-container');
+        const uiOverlay = document.getElementById('overlay');
+        const uiModalStandard = document.getElementById('modal-standard');
+        const uiModalLessons = document.getElementById('modal-lessons');
+        const uiBtnAddServer = document.getElementById('btn-add-server');
+        const uiBtnAddLB = document.getElementById('btn-add-lb');
+        const uiBtnCloud = document.getElementById('btn-cloud-migration');
+
+        // Stat Box Containers for Border Updates
+        const boxTraffic = document.getElementById('box-traffic');
+        const boxCapacity = document.getElementById('box-capacity');
+        const boxFrustration = document.getElementById('box-frustration');
+        const boxBudget = document.getElementById('box-budget');
+        const boxProgress = document.getElementById('box-progress');
+
+        renderInfrastructure();
+
+        function startGameLoop() {
+            if(gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(() => {
+                if (isPaused) return; 
+                
+                elapsedSeconds += 0.5;
+                trafficTrendCounter += 0.05;
+                
+                calculateTraffic();
+                distributeTraffic();
+                calculateFrustration();
+                handleAutoScaling();
+                updateUI();
+                
+                if (elapsedSeconds >= totalDaySeconds) {
+                    clearInterval(gameInterval);
+                    evaluateDayEnd();
+                }
+            }, 500);
+        }
+
+        function calculateTraffic() {
+            if (currentDay === 1) {
+                traffic = Math.floor(60 + Math.sin(trafficTrendCounter) * 40 + (elapsedSeconds * 5));
+            } else if (currentDay === 2) {
+                traffic = Math.floor(150 + Math.sin(trafficTrendCounter * 2) * 100 + (elapsedSeconds * 7));
+            } else if (currentDay === 3) {
+                if (elapsedSeconds < 22) {
+                    traffic = Math.floor(200 + Math.cos(trafficTrendCounter) * 120 + (elapsedSeconds * 16)); 
+                } else {
+                    traffic = Math.max(40, traffic - 50); 
+                }
+            }
+        }
+
+        function distributeTraffic() {
+            let activeServers = servers.filter(srv => !srv.crashed);
+            if (activeServers.length === 0) {
+                servers.forEach(srv => srv.currentLoad = 0);
+                return;
+            }
+
+            if (!hasLoadBalancer) {
+                servers[0].currentLoad = !servers[0].crashed ? traffic : 0;
+                for(let i = 1; i < servers.length; i++) servers[i].currentLoad = 0;
+            } else {
+                let splitLoad = Math.floor(traffic / activeServers.length);
+                servers.forEach(srv => {
+                    srv.currentLoad = !srv.crashed ? splitLoad : 0;
+                });
+            }
+        }
+
+        function calculateFrustration() {
+            let frustrationAddedThisTick = 0;
+            servers.forEach(srv => {
+                if (srv.crashed) return;
+                if (srv.currentLoad >= srv.crashThreshold) {
+                    srv.crashed = true;
+                    srv.capacity = 0;
+                    srv.currentLoad = 0;
+                    renderInfrastructure();
+                    return;
+                }
+                if (srv.currentLoad >= 85) {
+                    let stressSeverity = srv.currentLoad - 85;
+                    if (!isCloudMode && Math.random() < 0.03) {
+                        budget = Math.max(0, budget - 1500);
+                        alert("⚠️ HARDWARE FATIGUE TICKET!\nRunning On-Premises hardware over 85 RPM caused localized system fatigue. Out-of-pocket maintenance cost of $1,500 deducted.");
+                    }
+                    frustrationAddedThisTick += srv.currentLoad > srv.capacity ? 0.5 + (stressSeverity * 0.025) : 0.1 + (stressSeverity * 0.015);
+                }
+            });
+
+            if (servers.filter(srv => !srv.crashed).length === 0) frustrationAddedThisTick += 4.0;
+            frustration = Math.min(100, Math.max(0, frustration + (frustrationAddedThisTick > 0 ? frustrationAddedThisTick : -0.3)));
+            if (frustration >= 100) gameOver();
+        }
+
+        function handleAutoScaling() {
+            if (!isASGEnabled || !isCloudMode) return;
+            let activeServers = servers.filter(srv => !srv.crashed);
+            let totalCapacity = activeServers.length * 100;
+            
+            while (traffic > totalCapacity - 20 && servers.length < maxCloudServers) {
+                servers.push({ id: Date.now() + servers.length, capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 });
+                activeServers = servers.filter(srv => !srv.crashed);
+                totalCapacity = activeServers.length * 100;
+            }
+            while (traffic < (totalCapacity - 140) && servers.length > 3) {
+                let healthyIndex = servers.findIndex(srv => !srv.crashed);
+                if (healthyIndex !== -1) servers.splice(healthyIndex, 1);
+                activeServers = servers.filter(srv => !srv.crashed);
+                totalCapacity = activeServers.length * 100;
+            }
+            renderInfrastructure();
+        }
+
+        function updateUI() {
+            let activeServers = servers.filter(srv => !srv.crashed);
+            let totalCapacity = activeServers.length * 100;
+
+            uiTraffic.innerText = `${traffic} RPM`;
+            uiCapacity.innerText = `${totalCapacity} RPM`;
+            uiBudget.innerText = `$${budget.toLocaleString()}`;
+            uiFrustration.style.width = `${frustration}%`;
+            uiTime.style.width = `${(elapsedSeconds / totalDaySeconds) * 100}%`;
+
+            // 1. Live Traffic Demand Border: Red if traffic exceeds what working servers can physically handle
+            if (traffic > totalCapacity) {
+                boxTraffic.className = 'stat-box border-red';
+            } else {
+                boxTraffic.className = 'stat-box border-green';
+            }
+
+            // 2. Total Server Capacity Border: Red if overall cluster load exceeds 85% utilization
+            if (totalCapacity > 0 && (traffic / totalCapacity) >= 0.85) {
+                boxCapacity.className = 'stat-box border-red';
+            } else {
+                boxCapacity.className = 'stat-box border-green';
+            }
+
+            // 3. Customer Frustration Border: Red if it passes 60% frustration mark
+            if (frustration > 60) {
+                boxFrustration.className = 'stat-box border-red';
+            } else {
+                boxFrustration.className = 'stat-box border-green';
+            }
+
+            // 4. Budget Remaining Border: Red when dropping below $2,000 threshold
+            if (budget < 2000) {
+                boxBudget.className = 'stat-box border-red';
+            } else {
+                boxBudget.className = 'stat-box border-green';
+            }
+
+            // 5. Day Progress Border: Red at start, turns Green when finishing (80% complete or higher)
+            if ((elapsedSeconds / totalDaySeconds) >= 0.80) {
+                boxProgress.className = 'stat-box border-green';
+            } else {
+                boxProgress.className = 'stat-box border-red';
+            }
+
+            // Server instances UI synchronization loop
+            servers.forEach((srv, index) => {
+                const srvEl = document.getElementById(`srv-${index}`);
+                if (srvEl && !srv.crashed) {
+                    const fillEl = srvEl.querySelector('.server-bar-fill');
+                    const loadPct = Math.min(100, (srv.currentLoad / srv.capacity) * 100);
+                    fillEl.style.width = `${loadPct}%`;
+                    
+                    if (srv.currentLoad >= 100) {
+                        srvEl.className = 'server overloaded';
+                        fillEl.style.backgroundColor = '#e74c3c';
+                    } else if (srv.currentLoad >= 85) {
+                        srvEl.className = 'server warning';
+                        fillEl.style.backgroundColor = '#f39c12';
+                    } else {
+                        srvEl.className = 'server';
+                        fillEl.style.backgroundColor = 'var(--success-color)';
+                    }
+                    srvEl.querySelector('.server-stats').innerText = `${srv.currentLoad}/${srv.capacity} RPM`;
+                }
+            });
+        }
+
+        function renderInfrastructure() {
+            uiServersContainer.innerHTML = '';
+            servers.forEach((srv, index) => {
+                const srvDiv = document.createElement('div');
+                srvDiv.className = srv.crashed ? 'server crashed' : 'server';
+                srvDiv.id = `srv-${index}`;
+                
+                if (srv.crashed) {
+                    srvDiv.innerHTML = `
+                        <div class="server-label" style="color: #888;">💀 CRASHED</div>
+                        <div style="font-size:0.65rem; color:#e74c3c; margin:4px 0;">Hardware Overload</div>
+                        <div class="server-stats" style="font-size:0.7rem; color:#555;">0/0 RPM</div>
+                    `;
+                } else {
+                    srvDiv.innerHTML = `
+                        <div class="server-label">${isCloudMode ? '☁️ Cloud VM' : '🖥️ On-Prem'} ${index+1}</div>
+                        <div class="server-bar"><div class="server-bar-fill"></div></div>
+                        <div class="server-stats">0/100 RPM</div>
+                    `;
+                }
+                uiServersContainer.appendChild(srvDiv);
+            });
+        }
+
+        function addManualServer() {
+            let cost = isCloudMode ? 400 : 1500;
+            if (budget >= cost) {
+                if (isCloudMode && servers.length >= maxCloudServers) return;
+                budget -= cost;
+                servers.push({ id: Date.now(), capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 });
+                renderInfrastructure();
+                updateUI();
+            } else {
+                alert("Out of budget!");
+            }
+        }
+
+        function addLoadBalancer() {
+            if (budget >= 2000) {
+                budget -= 2000;
+                hasLoadBalancer = true;
+                document.getElementById('load-balancer-node').style.display = 'block';
+                uiBtnAddLB.style.display = 'none';
+                renderInfrastructure();
+                updateUI();
+            } else {
+                alert("Out of budget!");
+            }
+        }
+
+        function migrateToCloud() {
+            if (budget >= 4000) {
+                budget -= 4000;
+                isCloudMode = true;
+                hasLoadBalancer = true; 
+                
+                document.getElementById('load-balancer-node').style.display = 'block';
+                document.getElementById('load-balancer-node').innerText = '⚖️ AWS Elastic Load Balancer (ELB)';
+                document.getElementById('autoscaling-toggle-container').style.display = 'block';
+                
+                uiBtnCloud.style.display = 'none';
+                uiBtnAddServer.innerText = "Provision Cloud Instance ($400)";
+                
+                servers = [
+                    { id: 1, capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 },
+                    { id: 2, capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 },
+                    { id: 3, capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 }
+                ];
+                
+                document.getElementById('asg-switch').checked = true;
+                isASGEnabled = true;
+                uiBtnAddServer.disabled = true;
+
+                renderInfrastructure();
+                updateUI();
+            }
+        }
+
+        function toggleASG() {
+            isASGEnabled = document.getElementById('asg-switch').checked;
+            uiBtnAddServer.disabled = isASGEnabled; 
+        }
+
+        function openLessonsModal() {
+            isPaused = true; 
+            uiModalStandard.style.display = 'none';
+            uiModalLessons.style.display = 'block';
+            uiOverlay.style.display = 'flex';
+        }
+
+        function closeLessonsModal() {
+            uiOverlay.style.display = 'none';
+            uiModalLessons.style.display = 'none';
+            isPaused = false;
+            if(elapsedSeconds > 0 && elapsedSeconds < totalDaySeconds && frustration < 100) {
+                startGameLoop();
+            }
+        }
+
+        function closeModal() {
+            uiOverlay.style.display = 'none';
+            isPaused = false;
+            startGameLoop();
+        }
+
+        function openModal(heading, body, btnText) {
+            isPaused = true;
+            document.getElementById('modal-heading').innerText = heading;
+            document.getElementById('modal-body').innerText = body;
+            uiModalStandard.style.display = 'block';
+            uiModalLessons.style.display = 'none';
+            uiModalStandard.querySelector('button').innerText = btnText;
+            uiOverlay.style.display = 'flex';
+        }
+
+        function evaluateDayEnd() {
+            if (currentDay === 1) {
+                currentDay = 2; elapsedSeconds = 0;
+                document.getElementById('day-title').innerText = "Day 2: Mid-December Spikes";
+                document.getElementById('day-desc').innerText = "Traffic is intensifying. Sitting near full utilization degrades response times (85+ RPM) and threatens physical unit hardware failures!";
+                budget += 6000; 
+                openModal("Day 1 Completed!", "You survived Day 1! Notice how buying extra servers without an active Load Balancer keeps them completely bypassed by workloads.", "Begin Day 2");
+            } else if (currentDay === 2) {
+                currentDay = 3; elapsedSeconds = 0;
+                document.getElementById('day-title').innerText = "Day 3: Christmas Eve & Cloud Scaling";
+                document.getElementById('day-desc').innerText = "The peak wave is arriving. Cloud elastic provisioning acts as your automated shield against high-load cascading infrastructure meltdowns.";
+                uiBtnAddLB.style.display = 'none';
+                uiBtnCloud.style.display = 'block';
+                budget += 6000;
+                openModal("Day 2 Survived!", "Manual scaling is too slow during intense holiday spikes. Let's modernize our stack with fully automated cloud elasticity.", "Begin Day 3");
+            } else if (currentDay === 3) {
+                let penaltyText = !isCloudMode ? 
+                    `\n\n⚠️ POST-SEASON LOSS: Remaining On-Premises means you are STUCK with empty hardware assets now! A $2,000 depreciation tax per node cost you $${(servers.length * 2000).toLocaleString()}.` :
+                    `\n\n☁️ ELASTIC EFFICIENCY SAVINGS: Because you migrated to Cloud, the Auto-Scaling Group deleted the excess instances the moment traffic cleared. Post-season loss: $0!`;
+                openModal("🏆 Victory!", `You saved Christmas! Your final net balance calculation is $${budget.toLocaleString()}.${penaltyText}`, "Play Again");
+                resetGame();
+            }
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            openModal("💥 Infrastructure Crash!", "Your architecture collapsed under heavy workload pressure. Unbalanced traffic streams or unscaled backlogs triggered a systemic failure.", "Try Again");
+            resetGame();
+        }
+
+        function resetGame() {
+            currentDay = 1; traffic = 0; budget = 10000; frustration = 0; elapsedSeconds = 0; trafficTrendCounter = 0;
+            servers = [{ id: 1, capacity: 100, currentLoad: 0, crashed: false, crashThreshold: Math.floor(Math.random() * (200 - 135 + 1)) + 135 }];
+            hasLoadBalancer = false; isCloudMode = false; isASGEnabled = false;
+
+            document.getElementById('day-title').innerText = "Day 1: On-Prem Chaos";
+            document.getElementById('day-desc').innerText = "Warning: Keeping servers in the red is high-risk! Frustration starts building early at 85 RPM, and structural failure triggers rapidly past 135 RPM.";
+            document.getElementById('load-balancer-node').style.display = 'none';
+            document.getElementById('load-balancer-node').innerText = '⚖️ Hardware Load Balancer';
+            document.getElementById('autoscaling-toggle-container').style.display = 'none';
+            document.getElementById('asg-switch').checked = false;
+            
+            uiBtnAddServer.style.display = 'block';
+            uiBtnAddServer.innerText = "Buy Hardware Server ($1,500)";
+            uiBtnAddServer.disabled = false;
+            uiBtnAddLB.style.display = 'block';
+            uiBtnCloud.style.display = 'none';
+
+            // Reset borders explicitly back to default
+            boxTraffic.className = 'stat-box border-green';
+            boxCapacity.className = 'stat-box border-green';
+            boxFrustration.className = 'stat-box border-green';
+            boxBudget.className = 'stat-box border-green';
+            boxProgress.className = 'stat-box border-red';
+
+            renderInfrastructure();
+            updateUI();
+        }
+    </script>
+</body>
+</html>
