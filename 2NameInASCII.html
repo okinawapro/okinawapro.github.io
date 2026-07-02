@@ -147,9 +147,8 @@
       </tr>
 
 <script>
-for (let i = 33; i < 127; i++) {
-  let char =
-    (i < 32 || i === 127) ? "Control" : String.fromCharCode(i);
+for (let i = 65; i < 123; i++) {
+  let char = String.fromCharCode(i);
   let binary = i.toString(2).padStart(8, "0");
 
   document.write(
