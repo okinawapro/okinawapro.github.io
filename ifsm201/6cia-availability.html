@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CIA Triad – Break the System (Availability)</title>
+
+<style>
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 24px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  p {
+    text-align: center;
+    color: #475569;
+  }
+
+  .container {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .box {
+    flex: 1;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 320px;
+  }
+
+  .box h2 {
+    text-align: center;
+    margin-top: 0;
+    color: #334155;
+  }
+
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+  }
+
+  .card {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 12px;
+    width: 240px;
+    cursor: grab;
+    border: 2px solid transparent;
+    transition: background 0.3s, border 0.3s;
+  }
+
+  .card.correct {
+    background: #dcfce7;
+    border-color: #22c55e;
+  }
+
+  .card.wrong {
+    background: #fce7f3;
+    border-color: #ec4899;
+  }
+
+  .controls {
+    text-align: center;
+    margin-top: 24px;
+  }
+
+  button {
+    background: #e2e8f0;
+    border: none;
+    color: #0f172a;
+    padding: 10px 18px;
+    margin: 6px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #cbd5e1;
+  }
+
+  /* Modal */
+  .modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 14px;
+  max-width: 520px;
+  text-align: center; 
+  box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+}
+
+.modal h3 {
+  margin-top: 0;
+  color: #0f766e;
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>CIA Triad – Break the System</h1>
+<p>Classify each situation based on whether system and data availability are preserved.</p>
+
+<div class="container">
+  <div class="box" data-accept="intact">
+    <h2>Availability Preserved</h2>
+  </div>
+
+  <div class="box" data-accept="broken">
+    <h2>Availability Compromised</h2>
+  </div>
+</div>
+
+<div class="cards" id="cardContainer"></div>
+
+<div class="controls">
+  <button onclick="checkAnswers()">Check</button>
+  <button onclick="solve()">Solve</button>
+  <button onclick="resetGame()">Reset</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>🎉 Systems available when needed!</h3>
+  </div>
+</div>
+
+<!-- Lessons Learned Modal -->
+<div class="modal-overlay" id="lessonModal">
+  <div class="modal">
+    <h3>📘 Lessons Learned</h3>
+    <p>
+      This activity highlights that information security is not only about stopping attackers, but about designing systems that ensure data is protected,
+       accurate, and available at the moment it is needed.<br>
+       Many security failures arise from everyday decisions such as excessive permissions, weak change controls, or lack of redundancy rather than
+        dramatic technical attacks. By examining realistic situations, we see how people, processes, and technology must work together to support 
+        trustworthy and resilient information systems.
+    </p>
+    <button onclick="closeLessonModal()">Close</button>
+  </div>
+</div>
+
+<script>
+const cardsData = [
+  { text: "System traffic is balanced across multiple servers", correct: "intact" },
+  { text: "Single server in use for confidential data", correct: "broken" },
+  { text: "Regular backups are stored and tested for restoration", correct: "intact" },
+  { text: "Ransomware encrypts systems, halting normal operations", correct: "broken" },
+  { text: "Uninterruptible power supply prevents shutdown during outages", correct: "intact" },
+  { text: "Denial-of-service attack overwhelms network capacity", correct: "broken" },
+  { text: "Scheduled maintenance occurs during low-usage periods", correct: "intact" },
+  { text: "System crash occurs with no recovery procedure defined", correct: "broken" },
+  { text: "Failover systems activate automatically upon failure", correct: "intact" },
+  { text: "Critical application depends on a single network path", correct: "broken" },
+  { text: "Disaster recovery plan is documented and rehearsed", correct: "intact" },
+  { text: "Hardware failure causes extended service outage", correct: "broken" },
+  { text: "Ransomware attack encrypts payroll system", correct: "broken" },
+  { text: "Monitoring detects issues before users are impacted", correct: "intact" }
+];
+
+const cardContainer = document.getElementById("cardContainer");
+const modal = document.getElementById("modal");
+let draggingCard = null;
+
+function createCards() {
+  cardContainer.innerHTML = "";
+  shuffle(cardsData).forEach(item => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.textContent = item.text;
+    card.draggable = true;
+    card.dataset.correct = item.correct;
+
+    card.addEventListener("dragstart", () => draggingCard = card);
+    card.addEventListener("dragend", () => draggingCard = null);
+
+    cardContainer.appendChild(card);
+  });
+}
+
+document.querySelectorAll(".box").forEach(box => {
+  box.addEventListener("dragover", e => e.preventDefault());
+  box.addEventListener("drop", () => {
+    if (draggingCard) box.appendChild(draggingCard);
+  });
+});
+
+function checkAnswers() {
+  let allCorrect = true;
+
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct", "wrong");
+    const parentBox = card.parentElement.dataset.accept;
+
+    if (parentBox === card.dataset.correct) {
+      card.classList.add("correct");
+    } else {
+      card.classList.add("wrong");
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    showSuccessThenLesson();
+  }
+}
+
+function solve() {
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct", "wrong");
+    const targetBox = document.querySelector(
+      `.box[data-accept="${card.dataset.correct}"]`
+    );
+    targetBox.appendChild(card);
+  });
+}
+
+function resetGame() {
+  document.querySelectorAll(".box").forEach(box => {
+    box.querySelectorAll(".card")
+      .forEach(card => cardContainer.appendChild(card));
+  });
+
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct", "wrong");
+  });
+
+  modal.style.display = "none";
+
+  shuffle(Array.from(cardContainer.children))
+    .forEach(card => cardContainer.appendChild(card));
+}
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function showSuccessThenLesson() {
+  const successModal = document.getElementById("modal");
+  const lessonModal = document.getElementById("lessonModal");
+
+  successModal.style.display = "flex";
+
+  setTimeout(() => {
+    successModal.style.display = "none";
+    lessonModal.style.display = "flex";
+  }, 3000);
+}
+
+function closeLessonModal() {
+  document.getElementById("lessonModal").style.display = "none";
+}
+
+
+createCards();
+</script>
+
+</body>
+</html>

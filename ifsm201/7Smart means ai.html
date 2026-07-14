@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>AI vs ML Sorting Game</title>
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(to right, #84fab0, #8fd3f4);
+}
+
+/* Cards */
+.card {
+  width: 180px;
+  padding: 10px;
+  margin: 6px;
+  background: white;
+  border-radius: 10px;
+  cursor: grab;
+  display: inline-block;
+}
+
+/* Zones (fixed size, no shifting) */
+.zone {
+  width: 260px;
+  height: 300px;
+  overflow-y: auto;
+  margin: 15px;
+  display: inline-block;
+  vertical-align: top;
+  border: 3px dashed #333;
+  border-radius: 15px;
+  padding: 10px;
+  background: rgba(255,255,255,0.6);
+}
+
+/* Feedback colors */
+.correct { background-color: lightgreen !important; }
+.wrong { background-color: pink !important; }
+
+/* Buttons */
+button {
+  margin: 10px;
+  padding: 10px 15px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* Congrats popup */
+#congrats {
+  position: fixed;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  padding: 30px;
+  background: gold;
+  border-radius: 15px;
+  font-size: 28px;
+  font-weight: bold;
+  transition: transform 0.5s ease;
+}
+
+/* Modal */
+.modal {
+  display: none;
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background: rgba(0,0,0,0.7);
+}
+
+.modal-content {
+  background:white;
+  padding:20px;
+  margin:15% auto;
+  width:60%;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🤖 AI vs 🧠 ML vs ⚙️ Not AI</h2>
+<p>Drag each example into the correct category</p>
+
+<div id="cardPool"></div>
+
+<div>
+  <div class="zone" id="aiZone"><b>🤖 AI</b></div>
+  <div class="zone" id="mlZone"><b>🧠 Machine Learning</b></div>
+  <div class="zone" id="notZone"><b>⚙️ Not AI</b></div>
+</div>
+
+<button onclick="checkAnswers()">✅ Check Answers</button>
+<button onclick="resetGame()">🔄 Reset</button>
+
+<div id="congrats">🎉 CONGRATULATIONS! 🎉</div>
+
+<!-- Modal -->
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <h3>📚 Lesson Learned</h3>
+    <p>
+      • Machine Learning is a subset of AI<br><br>
+      • AI includes systems that simulate intelligence (even without learning)<br><br>
+      • Not all software is AI—many programs simply follow fixed rules<br><br>
+      • The key difference: <b>Does it learn from data?</b>
+    </p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+
+const data = [
+ {text:"Netflix Recommendations", type:"ml"},
+ {text:"Spam Email Filter", type:"ml"},
+ {text:"Self-driving Car System", type:"ai"},
+ {text:"Alexa Voice Assistant", type:"ai"},
+ {text:"Chess Program (Rule-based)", type:"ai"},
+ {text:"Calculator", type:"not"},
+ {text:"Sorting Numbers with Code", type:"not"},
+ {text:"Google Search Ranking", type:"ml"},
+ {text:"Face Recognition", type:"ml"},
+ {text:"Simple Chatbot (pre-written replies)", type:"ml"},
+ {text:"Excel SUM formula", type:"not"},
+ {text:"Autocorrect System in Writing Software", type:"not"}
+];
+
+const pool = document.getElementById("cardPool");
+
+function createCards(){
+ pool.innerHTML="";
+ document.querySelectorAll(".zone").forEach(z=>{
+   z.innerHTML = "<b>" + z.id.replace("Zone","").toUpperCase() + "</b>";
+ });
+
+ data.forEach((item,i)=>{
+  let c=document.createElement("div");
+  c.className="card";
+  c.id="card"+i;
+  c.innerText=item.text;
+  c.dataset.type=item.type;
+  c.draggable=true;
+  c.addEventListener("dragstart", drag);
+  pool.appendChild(c);
+ });
+}
+
+createCards();
+
+// drag
+function drag(ev){ ev.dataTransfer.setData("text",ev.target.id); }
+
+document.querySelectorAll(".zone").forEach(zone=>{
+ zone.addEventListener("dragover",e=>e.preventDefault());
+ zone.addEventListener("drop",e=>{
+  e.preventDefault();
+  let id=e.dataTransfer.getData("text");
+  zone.appendChild(document.getElementById(id));
+ });
+});
+
+// check answers
+function checkAnswers(){
+ let correctCount = 0;
+
+ data.forEach((item,i)=>{
+  let card=document.getElementById("card"+i);
+  card.classList.remove("correct","wrong");
+
+  let parent=card.parentNode.id;
+  let expected =
+    item.type==="ai" ? "aiZone" :
+    item.type==="ml" ? "mlZone" : "notZone";
+
+  if(parent===expected){
+    card.classList.add("correct");
+    correctCount++;
+  } else if(parent==="aiZone" || parent==="mlZone" || parent==="notZone"){
+    card.classList.add("wrong");
+  }
+ });
+
+ if(correctCount===data.length){
+   showCongrats();
+ }
+}
+
+// reset
+function resetGame(){
+ createCards();
+ document.getElementById("congrats").style.transform="translate(-50%, -50%) scale(0)";
+ closeModal();
+}
+
+// congrats animation
+function showCongrats(){
+ let box = document.getElementById("congrats");
+ box.style.transform = "translate(-50%, -50%) scale(1.2)";
+
+ setTimeout(()=>{
+  box.style.transform = "translate(-50%, -50%) scale(0)";
+  document.getElementById("modal").style.display="block";
+ },3000);
+}
+
+// modal
+function closeModal(){
+ document.getElementById("modal").style.display="none";
+}
+
+</script>
+
+</body>
+</html>

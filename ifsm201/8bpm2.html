@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BPM Learning Lab</title>
+
+<style>
+body {
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+
+h1 { color:#38bdf8; }
+
+/* Process buttons */
+#processList {
+  display:flex;
+  justify-content:center;
+  gap:15px;
+  margin:20px;
+}
+
+.processCard {
+  background:#38bdf8;
+  color:black;
+  padding:15px;
+  border-radius:10px;
+  cursor:pointer;
+  width:160px;
+  font-weight:bold;
+}
+
+.processCard:hover { transform:scale(1.1); }
+
+/* Modal */
+#modal, #lessonModal {
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+  display:none;
+  width:85%;
+}
+
+/* Close button */
+.closeBtn {
+  position:absolute;
+  top:10px;
+  right:15px;
+  cursor:pointer;
+  font-size:20px;
+  color:#f87171;
+}
+
+.closeBtn:hover { transform:scale(1.2); }
+
+/* Layout */
+.container {
+  display:flex;
+  justify-content:space-around;
+  gap:10px;
+}
+
+.box {
+  width:30%;
+  min-height:250px;
+  border:2px dashed #38bdf8;
+  padding:10px;
+}
+
+.field {
+  background:#38bdf8;
+  color:black;
+  padding:5px;
+  margin:5px;
+  border-radius:5px;
+  cursor:grab;
+}
+
+/* Feedback colors */
+.correct { background:#22c55e !important; }
+.wrong { background:#f472b6 !important; }
+
+/* Buttons */
+button {
+  margin:10px;
+  padding:10px;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+#checkBtn { background:#22c55e; }
+#solveBtn { background:#3b82f6; }
+#resetBtn { background:#ef4444; }
+#lessonBtn { background:#eab308; color:black; }
+
+/* Success popup */
+#successPopup {
+  position:fixed;
+  top:40%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  background:#22c55e;
+  padding:20px;
+  border-radius:10px;
+  font-size:20px;
+  display:none;
+  animation:pop 5s forwards;
+  color:black;
+}
+
+@keyframes pop {
+  0% {transform:translate(-50%,-50%) scale(0);}
+  40% {transform:translate(-50%,-50%) scale(1.3);}
+  80% {transform:translate(-50%,-50%) scale(1);}
+  100% {transform:translate(-50%,-50%) scale(0);}
+}
+
+</style>
+</head>
+
+<body>
+
+<h1>🚀 BPM Optimization Lab</h1>
+
+<div id="processList">
+  <div class="processCard" onclick="openOrder()">📦 Order Entry</div>
+  <div class="processCard" onclick="openApprove()">✅ Approve Order</div>
+  <div class="processCard" onclick="openShipping()">🚚 Shipping</div>
+</div>
+
+<!-- MAIN MODAL -->
+<div id="modal">
+  <span class="closeBtn" onclick="closeModal()">✖</span>
+  <h2 id="title"></h2>
+
+  <div class="container">
+    <div class="box" id="formBox"></div>
+    <div class="box" id="trashBox" ondragover="allowDrop(event)" ondrop="drop(event)">
+      <h3>🗑 Remove</h3>
+    </div>
+    <div class="box" id="newBox"></div>
+  </div>
+
+  <button id="checkBtn" onclick="checkSolution()">✅ Check</button>
+  <button id="solveBtn" onclick="solve()">⚡ Solve</button>
+  <button id="resetBtn" onclick="reset()">🔄 Reset</button>
+</div>
+
+<!-- LESSON MODAL -->
+<div id="lessonModal">
+  <span class="closeBtn" onclick="closeLessons()">✖</span>
+  <h2>🎯 Lessons Learned</h2>
+
+  <p>
+    This activity simulates real-world Business Process Management (BPM).
+  </p>
+
+  <h3>🧠 Purpose</h3>
+  <ul style="text-align:left">
+    <li>Identify inefficient steps in a process</li>
+    <li>Recognize unnecessary data collection</li>
+    <li>Improve workflow efficiency</li>
+    <li>Develop critical thinking as a process analyst</li>
+  </ul>
+
+  <h3>🚀 Key Lessons</h3>
+  <ul style="text-align:left">
+    <li>✔ Remove steps that add no value</li>
+    <li>✔ Keep only data needed for decisions</li>
+    <li>✔ Reduce repetition and redundancy</li>
+    <li>✔ Optimize flow to reduce delays and errors</li>
+    <li>✔ Every step should serve a purpose</li>
+  </ul>
+
+  <h3>💡 Core Insight</h3>
+  <p>
+    “Efficient processes don't just happen — they are designed.”
+  </p>
+</div>
+
+<!-- Bottom Button -->
+<button id="lessonBtn" onclick="openLessons()">📘 Lessons Learned</button>
+
+<div id="successPopup">🎉 Perfect Optimization!</div>
+
+<script>
+
+// MODE
+let currentMode="order";
+
+// ---------- DATA ----------
+
+// ORDER
+let orderInitial = ["Sender Name","Sender Name (Confirm)","Sender Phone","Favorite Color","Receiver Name","Receiver Address","Nickname"];
+let orderCorrect = ["Sender Name","Sender Phone","Receiver Name","Receiver Address","Delivery Notes"];
+let orderExtras = ["Delivery Notes","Email","Tracking ID","Country","ZIP Code"];
+
+// APPROVE
+let approveInitial = ["Review Order","Verify Payment","Send Thank You Email","Approve Order","Print Internal Memo","Confirm Customer Details"];
+let approveCorrect = ["Review Order","Verify Payment","Confirm Customer Details","Approve Order","Contact Inventory","Send to Shipping"];
+let approveExtras = ["Contact Inventory","Send to Shipping","Notify Shipping System","Archive Paper Copy","Ask Manager for Coffee"];
+
+// SHIPPING
+let shippingInitial = ["Prepare Package","Attach Label","Ship Package","Decorate Box","Take Selfie"];
+let shippingCorrect = ["Prepare Package","Attach Label","Contact Inventory","Send to Carrier","Ship Package"];
+let shippingExtras = ["Contact Inventory","Send to Carrier","Play Music","Check Weather Mood","Write Poem"];
+
+// ---------- DRAG ----------
+function allowDrop(e){ e.preventDefault(); }
+
+function drag(e){
+  e.dataTransfer.setData("text", e.target.id);
+}
+
+function drop(e){
+  e.preventDefault();
+  let id = e.dataTransfer.getData("text");
+  e.currentTarget.appendChild(document.getElementById(id));
+}
+
+// ---------- CREATE ----------
+let idCounter=0;
+function createField(text){
+  let d=document.createElement("div");
+  d.className="field";
+  d.innerText=text;
+  d.id="f"+idCounter++;
+  d.draggable=true;
+  d.ondragstart=drag;
+  return d;
+}
+
+// ---------- LOAD ----------
+function load(initial, extras, title){
+  document.getElementById("modal").style.display="block";
+  document.getElementById("title").innerText=title;
+
+  let form = document.getElementById("formBox");
+  let newBox = document.getElementById("newBox");
+  let trashBox = document.getElementById("trashBox");
+
+  // ✅ Reset ALL boxes properly
+  form.innerHTML = "<h3>Current</h3>";
+  newBox.innerHTML = "<h3>Add</h3>";
+  trashBox.innerHTML = "<h3>🗑 Remove</h3>";  // ✅ THIS WAS MISSING
+
+  // Repopulate
+  initial.forEach(f => form.appendChild(createField(f)));
+  extras.forEach(f => newBox.appendChild(createField(f)));
+
+  form.ondrop = drop;
+  form.ondragover = allowDrop;
+}
+// ---------- OPEN ----------
+function openOrder(){ currentMode="order"; load(orderInitial,orderExtras,"📦 Optimize Order Form"); }
+function openApprove(){ currentMode="approve"; load(approveInitial,approveExtras,"✅ Optimize Approval Process"); }
+function openShipping(){ currentMode="shipping"; load(shippingInitial,shippingExtras,"🚚 Optimize Shipping"); }
+
+// ---------- CHECK ----------
+function checkSolution(){
+  let form=document.getElementById("formBox");
+
+  let user=Array.from(form.children)
+    .filter(e=>e.classList.contains("field"))
+    .map(e=>e.innerText.trim());
+
+  let correct;
+  if(currentMode==="order") correct=orderCorrect;
+  else if(currentMode==="approve") correct=approveCorrect;
+  else correct=shippingCorrect;
+
+  let set=new Set(user);
+
+  let success=set.size===correct.length && correct.every(f=>set.has(f));
+
+  Array.from(form.children)
+    .filter(e=>e.classList.contains("field"))
+    .forEach(el=>{
+      let val=el.innerText.trim();
+      if(correct.includes(val)){
+        el.classList.add("correct");
+        el.classList.remove("wrong");
+      } else {
+        el.classList.add("wrong");
+        el.classList.remove("correct");
+      }
+    });
+
+  if(success) showSuccess();
+}
+
+// ---------- SOLVE ----------
+function solve(){
+  let form=document.getElementById("formBox");
+  form.innerHTML="<h3>Optimized</h3>";
+
+  let solution = currentMode==="order" ? orderCorrect :
+                 currentMode==="approve" ? approveCorrect :
+                 shippingCorrect;
+
+  solution.forEach(f=>form.appendChild(createField(f)));
+}
+
+// ---------- RESET ----------
+function reset(){
+  document.getElementById("modal").style.opacity = "0.6";
+
+  setTimeout(() => {
+    if(currentMode==="order") openOrder();
+    else if(currentMode==="approve") openApprove();
+    else openShipping();
+
+    document.getElementById("modal").style.opacity = "1";
+  }, 200);
+}
+
+
+// ---------- MODAL CONTROL ----------
+function closeModal(){ document.getElementById("modal").style.display="none"; }
+function openLessons(){ document.getElementById("lessonModal").style.display="block"; }
+function closeLessons(){ document.getElementById("lessonModal").style.display="none"; }
+
+// ---------- SUCCESS ----------
+function showSuccess(){
+  let pop=document.getElementById("successPopup");
+  pop.style.display="block";
+  setTimeout(()=>pop.style.display="none",5000);
+}
+</script>
+
+</body>
+</html>

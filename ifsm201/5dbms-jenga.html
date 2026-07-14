@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Database Jenga</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #ffb347, #ffcc33);
+    text-align: center;
+    padding: 20px;
+  }
+
+  h1 {
+    margin-bottom: 10px;
+  }
+
+  .game {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    margin-top: 20px;
+  }
+
+  /* STACK AREA */
+  .stack {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .slot {
+    width: 140px;
+    height: 60px;
+    border: 2px dashed #333;
+    margin: 6px 0;
+    background: rgba(255,255,255,0.7);
+    position: relative;
+  }
+
+  .slot::before {
+    content: attr(data-label);
+    position: absolute;
+    left: -35px;
+    top: 18px;
+    font-weight: bold;
+  }
+
+  /* CARDS */
+  .card {
+    width: 130px;
+    height: 50px;
+    background: #8b4513;
+    color: #fff;
+    font-weight: bold;
+    line-height: 50px;
+    text-align: center;
+    cursor: grab;
+    border-radius: 4px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+    user-select: none;
+  }
+
+  .card[data-size="1"] { background: #d2691e; }
+  .card[data-size="2"] { background: #cd853f; }
+  .card[data-size="3"] { background: #a0522d; }
+  .card[data-size="4"] { background: #654321; }
+
+  /* CARD POOL */
+  .pool {
+    width: 220px;
+    min-height: 260px;
+    background: rgba(255,255,255,0.6);
+    padding: 10px;
+    position: relative;
+  }
+
+  .fallen {
+    position: absolute;
+    transition: transform 1.5s ease, top 1.5s ease, left 1.5s ease;
+  }
+
+  /* BUTTONS */
+  .controls {
+    margin-top: 20px;
+  }
+
+  button {
+    padding: 8px 16px;
+    margin: 0 5px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  /* FALL ANIMATION */
+  .collapse .card {
+    animation: fall 1.8s ease-in forwards;
+  }
+
+  @keyframes fall {
+    to {
+      transform: translateY(300px) rotate(25deg);
+      opacity: 0;
+    }
+  }
+</style>
+</head>
+<body>
+
+<h1>🧱 Database Jenga</h1>
+<p>Stack from smallest (top) → largest (bottom)</p>
+
+<div class="game">
+  <!-- STACK -->
+  <div class="stack" id="stack">
+    <div class="slot" data-label="1" data-position="1"></div>
+    <div class="slot" data-label="2" data-position="2"></div>
+    <div class="slot" data-label="3" data-position="3"></div>
+    <div class="slot" data-label="4" data-position="4"></div>
+  </div>
+
+  <!-- POOL -->
+  <div class="pool" id="pool">
+    <div class="card" draggable="true" data-size="1">Field</div>
+    <div class="card" draggable="true" data-size="2">Record</div>
+    <div class="card" draggable="true" data-size="3">Table</div>
+    <div class="card" draggable="true" data-size="4">Database</div>
+  </div>
+</div>
+
+<div class="controls">
+  <button onclick="checkStack()">Check</button>
+  <button onclick="solveStack()">Solve</button>
+  <button onclick="resetGame()">Reset</button>
+</div>
+
+<script>
+let dragged = null;
+
+document.querySelectorAll('.card').forEach(card => {
+  card.addEventListener('dragstart', e => {
+    dragged = card;
+  });
+});
+
+document.querySelectorAll('.slot').forEach(slot => {
+  slot.addEventListener('dragover', e => e.preventDefault());
+
+  slot.addEventListener('drop', e => {
+    const required = slot.dataset.position;
+    const size = dragged.dataset.size;
+
+    if (slot.children.length === 0) {
+      slot.appendChild(dragged);
+
+      if (size !== required) {
+        collapseTower();
+      }
+    }
+  });
+});
+
+function collapseTower() {
+  const stack = document.getElementById('stack');
+  const cards = stack.querySelectorAll('.card');
+
+  stack.classList.add('collapse');
+
+  setTimeout(() => {
+    stack.classList.remove('collapse');
+    cards.forEach(card => dropToPool(card));
+  }, 1800);
+}
+
+function dropToPool(card) {
+  const pool = document.getElementById('pool');
+  pool.appendChild(card);
+
+  card.classList.add('fallen');
+  card.style.top = Math.random() * 140 + "px";
+  card.style.left = Math.random() * 60 + "px";
+  card.style.transform = `rotate(${Math.random()*60 - 30}deg)`;
+}
+
+function checkStack() {
+  const slots = document.querySelectorAll('.slot');
+  let correct = true;
+
+  slots.forEach(slot => {
+    if (!slot.firstChild || slot.firstChild.dataset.size !== slot.dataset.position) {
+      correct = false;
+    }
+  });
+
+  alert(correct ? "✅ Perfect stack!" : "❌ Something's wrong…");
+}
+
+function solveStack() {
+  resetGame();
+  document.querySelectorAll('.card').forEach(card => {
+    const slot = document.querySelector(`.slot[data-position="${card.dataset.size}"]`);
+    slot.appendChild(card);
+  });
+}
+
+function resetGame() {
+  const pool = document.getElementById('pool');
+  document.querySelectorAll('.card').forEach(card => {
+    card.removeAttribute("style");
+    card.classList.remove('fallen');
+    pool.appendChild(card);
+  });
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Black Box AI</title>
+
+<style>
+body {
+  font-family: Arial;
+  text-align: center;
+  background: linear-gradient(to right, #ffecd2, #fcb69f);
+}
+
+button {
+  padding: 10px;
+  margin: 10px;
+  font-weight: bold;
+  border-radius: 8px;
+}
+
+.table {
+  margin: 20px auto;
+  border-collapse: collapse;
+}
+
+td, th {
+  border: 1px solid #333;
+  padding: 8px;
+}
+
+.result {
+  font-weight: bold;
+}
+
+/* Modal */
+.modal {
+  display:none;
+  position:fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.7);
+}
+
+.modal-content {
+  background:white;
+  padding:20px;
+  margin:10% auto;
+  width:60%;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🤖 Black Box AI</h2>
+<p>The AI has been trained. Can you figure out how it makes decisions?</p>
+
+<h3>Training Data (What AI Learned From)</h3>
+
+<table class="table">
+<tr><th>Experience</th><th>Education</th><th>Outcome</th></tr>
+<tr><td>High</td><td>College</td><td>✅ Approved</td></tr>
+<tr><td>High</td><td>No College</td><td>✅ Approved</td></tr>
+<tr><td>Low</td><td>College</td><td>❌ Rejected</td></tr>
+<tr><td>Low</td><td>No College</td><td>✅ Approved</td></tr>
+</table>
+What is the rule to approve or reject.<br>
+<button onclick="runAI()">🚀 Run AI on New Candidates</button>
+
+<div id="testArea"></div>
+
+<button id="revealBtn" style="display:none;" onclick="reveal()">🔍 Reveal AI Logic</button>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3> AI Explanation</h3>
+    <p id="explanation"></p>
+    <button onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<script>
+
+function runAI(){
+
+ const testCases = [
+  {exp:"High", edu:"College"},
+  {exp:"Low", edu:"No College"},
+  {exp:"Low", edu:"College"}
+ ];
+
+ let html = "<h3>AI Decisions</h3><table class='table'>";
+ html += "<tr><th>Experience</th><th>Education</th><th>AI Decision</th></tr>";
+
+ testCases.forEach(c=>{
+   let result;
+
+   // hidden bias rule
+   if(c.exp === "High" || c.edu === "No College"){
+     result = "✅ Approved";
+   } else {
+     result = "❌ Rejected";
+   }
+
+   html += `<tr>
+     <td>${c.exp}</td>
+     <td>${c.edu}</td>
+     <td class="result">${result}</td>
+   </tr>`;
+ });
+
+ html += "</table>";
+
+ document.getElementById("testArea").innerHTML = html;
+ document.getElementById("revealBtn").style.display="inline";
+}
+
+function reveal(){
+
+ let msg = `
+  What happened?
+
+ The AI learned patterns from the training data.
+<br><br>
+ Hidden Rule:
+ The system favors either:
+ - High experience OR
+ - No college requirement
+<br><br>
+  Problem:
+ This creates inconsistent and unfair decisions.
+<br><br>
+  Lessons Learned:
+<br>
+ • AI is only as good as its training data  <br>
+ • Hidden bias can affect decisions  <br>
+ • AI does not understand fairness—it finds patterns  
+<br><br>
+  Analogy:
+ Like hiring based on patterns in past hires—even if those patterns were flawed.
+ `;
+
+ document.getElementById("explanation").innerHTML = msg;
+ document.getElementById("modal").style.display="block";
+}
+
+function closeModal(){
+ document.getElementById("modal").style.display="none";
+}
+
+</script>
+
+</body>
+</html>

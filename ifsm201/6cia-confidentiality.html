@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CIA Triad – Break the System (Confidentiality)</title>
+
+<style>
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background: #f8fafc;
+    color: #1e293b;
+    margin: 0;
+    padding: 24px;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 6px;
+  }
+
+  p {
+    text-align: center;
+    color: #475569;
+  }
+
+  .container {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+  }
+
+  .box {
+    flex: 1;
+    background: #ffffff;
+    border: 2px dashed #cbd5e1;
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 320px;
+  }
+
+  .box h2 {
+    text-align: center;
+    margin-top: 0;
+    color: #334155;
+  }
+
+  .cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 24px;
+    justify-content: center;
+  }
+
+  .card {
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 12px;
+    width: 240px;
+    cursor: grab;
+    border: 2px solid transparent;
+    transition: background 0.3s, border 0.3s;
+  }
+
+  .card.correct {
+    background: #dcfce7;
+    border-color: #22c55e;
+  }
+
+  .card.wrong {
+    background: #fce7f3;
+    border-color: #ec4899;
+  }
+
+  .controls {
+    text-align: center;
+    margin-top: 24px;
+  }
+
+  button {
+    background: #e2e8f0;
+    border: none;
+    color: #0f172a;
+    padding: 10px 18px;
+    margin: 6px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background: #cbd5e1;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal {
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 14px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+  }
+
+  .modal h3 {
+    margin: 0;
+    color: #16a34a;
+    font-size: 24px;
+  }
+</style>
+</head>
+
+<body>
+
+<h1>CIA Triad – Break the System</h1>
+<p>Classify each situation based on whether confidentiality remains protected.</p>
+
+<div class="container">
+  <div class="box" data-accept="intact">
+    <h2>Confidentiality Preserved</h2>
+  </div>
+
+  <div class="box" data-accept="broken">
+    <h2>Confidentiality Compromised</h2>
+  </div>
+</div>
+
+<div class="cards" id="cardContainer"></div>
+
+<div class="controls">
+  <button onclick="checkAnswers()">Check</button>
+  <button onclick="solve()">Solve</button>
+  <button onclick="resetGame()">Reset</button>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h3>🎉 Excellent work! Confidentiality secured.</h3>
+  </div>
+</div>
+
+<script>
+const cardsData = [
+  { text: "Staff member reviews records only within assigned project scope", correct: "intact" },
+  { text: "New hire can open archived compensation files for entire department", correct: "broken" },
+  { text: "Portable device is lost, but stored data was RSA encrypted", correct: "intact" },
+  { text: "Cloud storage objects are reachable with shared account", correct: "broken" },
+  { text: "Login requires something the user knows and something they have", correct: "intact" },
+  { text: "User believes a message requesting credentials appears legitimate", correct: "broken" },
+  { text: "Busy employees send Work documents to personal email to work over weekends", correct: "broken" },
+  { text: "Web traffic is protected during transmission across networks", correct: "intact" },
+  { text: "Multiple employees share a single privileged account", correct: "broken" },
+  { text: "Access permissions are aligned to job responsibility", correct: "intact" },
+  { text: "Sensitive printouts are discarded in burnable trash", correct: "broken" },
+  { text: "Removable media is protected before leaving the facility", correct: "intact" },
+  { text: "Departing employee copies data not required for transition", correct: "broken" }
+];
+
+const cardContainer = document.getElementById("cardContainer");
+const modal = document.getElementById("modal");
+let draggingCard = null;
+
+function createCards() {
+  cardContainer.innerHTML = "";
+  shuffle(cardsData).forEach(item => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.textContent = item.text;
+    card.draggable = true;
+    card.dataset.correct = item.correct;
+
+    card.addEventListener("dragstart", () => draggingCard = card);
+    card.addEventListener("dragend", () => draggingCard = null);
+
+    cardContainer.appendChild(card);
+  });
+}
+
+document.querySelectorAll(".box").forEach(box => {
+  box.addEventListener("dragover", e => e.preventDefault());
+  box.addEventListener("drop", () => {
+    if (draggingCard) box.appendChild(draggingCard);
+  });
+});
+
+function checkAnswers() {
+  let allCorrect = true;
+
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct", "wrong");
+    const parentBox = card.parentElement.dataset.accept;
+
+    if (parentBox === card.dataset.correct) {
+      card.classList.add("correct");
+    } else {
+      card.classList.add("wrong");
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    modal.style.display = "flex";
+    setTimeout(() => modal.style.display = "none", 3000);
+  }
+}
+
+function solve() {
+  // Move cards ONLY — no validation, no modal
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct", "wrong");
+    const targetBox = document.querySelector(
+      `.box[data-accept="${card.dataset.correct}"]`
+    );
+    targetBox.appendChild(card);
+  });
+}
+
+function resetGame() {
+  // Clear both drop boxes
+  document.querySelectorAll(".box").forEach(box => {
+    const cards = box.querySelectorAll(".card");
+    cards.forEach(card => cardContainer.appendChild(card));
+  });
+
+  // Remove feedback colors
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct", "wrong");
+  });
+
+  // Hide modal
+  modal.style.display = "none";
+
+  // Shuffle cards back into bank
+  shuffle(Array.from(cardContainer.children))
+    .forEach(card => cardContainer.appendChild(card));
+}
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+createCards();
+</script>
+
+</body>
+</html>

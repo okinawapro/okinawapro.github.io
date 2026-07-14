@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cloud vs On-Prem Storage – Interactive Lesson</title>
+
+<style>
+/* ---------- Global ---------- */
+body {
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e5e7eb;
+  padding: 20px;
+  margin: 0;
+}
+
+h1, h2 {
+  text-align: center;
+  margin: 10px 0;
+}
+
+/* ---------- Controls ---------- */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+
+button {
+  padding: 10px 14px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+/* ---------- Layout ---------- */
+.sim {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+.panel {
+  background: #020617;
+  border: 2px solid #334155;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+/* ---------- Metrics ---------- */
+.metric {
+  margin: 10px 0;
+}
+
+.cost {
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 10px;
+}
+
+.note {
+  margin-top: 12px;
+  font-style: italic;
+  color: #cbd5f5;
+}
+
+/* ---------- Inputs ---------- */
+input[type="range"] {
+  width: 200px;
+  vertical-align: middle;
+  margin: 0 8px;
+}
+
+/* ---------- Status Colors ---------- */
+.warn {
+  color: #f87171;
+}
+
+.good {
+  color: #4ade80;
+}
+
+/* ---------- Modal ---------- */
+#lessonsModal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 999;
+  justify-content: center;
+  align-items: center;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🗃️ Cloud vs On‑Prem Storage</h1>
+<h2>Cost, Scalability, and Download Risk</h2>
+
+<div class="controls">
+  <button onclick="setScene('normal')">Normal Day</button>
+  <button onclick="setScene('growth')">Growth Phase</button>
+  <button onclick="setScene('downloads')">Heavy Downloads ⚠️</button>
+  <button onclick="setScene('disaster')">Disaster Recovery</button>
+  <button onclick="setScene('review')">Year‑End Review</button>
+</div>
+
+<div class="controls">
+  Stored Data (TB):
+  <input type="range" min="1" max="200" value="20" id="data" oninput="update()">
+  <span id="dataVal">20</span> TB
+
+  Downloaded Per Month (TB):
+  <input type="range" min="0" max="200" value="10" id="egress" oninput="update()">
+  <span id="egressVal">10</span> TB
+</div>
+
+<div class="sim">
+  <!-- ON-PREM -->
+  <div class="panel">
+    <h3>🏢 On‑Prem Storage</h3>
+
+    <div class="metric">Storage Capacity: Fixed</div>
+    <div class="metric">Download Cost: <span class="good">$0</span></div>
+
+    <div class="cost">
+      Monthly Operational Cost: $<span id="onCost">0</span>
+    </div>
+
+    <div class="note">
+      Fixed operating costs (power, cooling, engineers).
+      Accessing data is free once hardware is purchased.
+    </div>
+  </div>
+
+  <!-- CLOUD -->
+  <div class="panel">
+    <h3>☁️ Cloud Storage</h3>
+
+    <div class="metric">Storage Scales Automatically</div>
+    <div class="metric warn">
+      Download (Egress) Costs Apply ⚠️
+    </div>
+
+    <div class="cost">
+      Monthly Cost: $<span id="cloudCost">0</span>
+    </div>
+
+    <div class="note" id="cloudNote"></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button onclick="openLessons()"
+          style="background:#16a34a;">
+    📘 Lessons Learned
+  </button>
+</div>
+
+<!-- Lessons Learned Modal -->
+<div id="lessonsModal">
+  <div style="
+    background:#020617;
+    max-width:900px;
+    width:90%;
+    padding:20px;
+    border-radius:12px;
+    border:2px solid #334155;
+    max-height:90vh;
+    overflow:auto;
+  ">
+    <div style="text-align:right;">
+      <button onclick="closeLessons()"
+              style="background:#ef4444;">
+        ✖ Close
+      </button>
+    </div>
+
+    <h2 style="text-align:center;">📘 Cloud vs On‑Prem Storage</h2>
+
+    <table style="width:100%;border-collapse:collapse;margin-top:10px;">
+      <tr style="background:#1e293b;">
+        <th style="border:1px solid #334155;padding:8px;">Category</th>
+        <th style="border:1px solid #334155;padding:8px;">🏢 On‑Prem</th>
+        <th style="border:1px solid #334155;padding:8px;">☁️ Cloud</th>
+      </tr>
+      <tr>
+        <td style="border:1px solid #334155;padding:8px;">Up‑Front Cost</td>
+        <td style="border:1px solid #334155;padding:8px;">High (hardware purchase)</td>
+        <td style="border:1px solid #334155;padding:8px;">Low</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #334155;padding:8px;">Monthly Cost</td>
+        <td style="border:1px solid #334155;padding:8px;">Fixed operational</td>
+        <td style="border:1px solid #334155;padding:8px;">Usage‑based</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #334155;padding:8px;">Download Cost</td>
+        <td style="border:1px solid #334155;padding:8px;">Free</td>
+        <td style="border:1px solid #334155;padding:8px;" class="warn">Expensive</td>
+      </tr>
+      <tr>
+        <td style="border:1px solid #334155;padding:8px;">Reliability</td>
+        <td style="border:1px solid #334155;padding:8px;">Depends on your design</td>
+        <td style="border:1px solid #334155;padding:8px;">
+          <b>11 nines durability</b> (99.999999999%)
+        </td>
+      </tr>
+    </table>
+
+    <h4>🛡️ What Does “11 Nines” Mean?</h4>
+    <p>
+      11 nines durability means data loss is statistically extremely unlikely —
+      less than one object lost per 100,000 years for large datasets.
+      Cloud providers achieve this through automatic replication
+      across multiple servers and locations.
+    </p>
+
+    <p>
+      This does <strong>not</strong> mean downloads are free or fast —
+      cloud storage is extremely durable, but moving data can be expensive.
+    </p>
+
+    <h3>🧠 Reflection Questions</h3>
+    <ol>
+      <li>When would frequent data downloads make on‑prem storage the cheaper option?</li>
+      <li>How could cloud egress costs affect global or data‑heavy applications?</li>
+      <li>Why is a hybrid storage approach common in real systems?</li>
+    </ol>
+
+  </div>
+</div>
+
+<script>
+function update() {
+  const data = Number(dataSlider.value);
+  const egress = Number(egressSlider.value);
+
+  dataVal.textContent = data;
+  egressVal.textContent = egress;
+
+  const onPremCost = 2000 + data * 50;
+  const cloudStorage = data * 23;
+  const cloudEgress = egress * 90;
+  const cloudTotal = cloudStorage + cloudEgress;
+
+  onCost.textContent = onPremCost.toLocaleString();
+  cloudCost.textContent = cloudTotal.toLocaleString();
+
+  cloudNote.textContent =
+    cloudEgress > cloudStorage
+      ? "⚠️ Download costs exceed storage costs — high budget risk."
+      : "Storage is cheap, but downloads can add up.";
+}
+
+function setScene(scene) {
+  if(scene === "normal"){dataSlider.value=20;egressSlider.value=5;}
+  if(scene === "growth"){dataSlider.value=100;egressSlider.value=20;}
+  if(scene === "downloads"){dataSlider.value=100;egressSlider.value=120;}
+  if(scene === "disaster"){dataSlider.value=150;egressSlider.value=150;}
+  if(scene === "review"){dataSlider.value=40;egressSlider.value=10;}
+  update();
+}
+
+function openLessons(){lessonsModal.style.display="flex";}
+function closeLessons(){lessonsModal.style.display="none";}
+
+const dataSlider = document.getElementById("data");
+const egressSlider = document.getElementById("egress");
+const dataVal = document.getElementById("dataVal");
+const egressVal = document.getElementById("egressVal");
+const onCost = document.getElementById("onCost");
+const cloudCost = document.getElementById("cloudCost");
+const cloudNote = document.getElementById("cloudNote");
+const lessonsModal = document.getElementById("lessonsModal");
+
+update();
+</script>
+
+</body>
+</html>

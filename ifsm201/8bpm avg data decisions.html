@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BI Data Decision Simulator</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+  background:#0f172a;
+  color:white;
+  font-family:Arial;
+  text-align:center;
+}
+
+h1 { color:#38bdf8; }
+
+.container {
+  display:flex;
+  justify-content:space-around;
+  margin-top:20px;
+}
+
+/* Table */
+#tableContainer {
+  height:300px;
+  overflow-y:auto;
+  width:30%;
+  border:2px solid #38bdf8;
+}
+
+table {
+  width:100%;
+  border-collapse:collapse;
+}
+
+th, td {
+  padding:5px;
+  border:1px solid #1e293b;
+}
+
+/* Decision Panel */
+#decisionBox {
+  width:25%;
+  background:#1e293b;
+  padding:10px;
+  border-radius:10px;
+}
+
+/* Buttons */
+button {
+  margin:5px;
+  padding:8px;
+  border:none;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.action { background:#38bdf8; }
+#runBtn { background:#22c55e; }
+
+/* Feedback */
+#result {
+  margin-top:10px;
+  font-size:16px;
+}
+
+/* Chart */
+canvas {
+  background:white;
+  border-radius:10px;
+}
+
+/* Animation */
+.good { color:#22c55e; }
+.bad { color:#f472b6; }
+
+</style>
+</head>
+
+<body>
+
+<h1>📊 BI Data → Decision Simulator</h1>
+
+<div class="container">
+
+  <!-- DATA TABLE -->
+  <div id="tableContainer">
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>Month</th>
+          <th>Sales</th>
+          <th>Inventory</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <!-- CHART -->
+  <div style="width:35%">
+    <canvas id="chart"></canvas>
+  </div>
+
+  <!-- DECISION PANEL -->
+  <div id="decisionBox">
+    <h3>🧠 Make a Decision</h3>
+
+    <button class="action" onclick="selectDecision('marketing')">Increase Marketing</button>
+    <button class="action" onclick="selectDecision('inventory')">Restock Inventory</button>
+    <button class="action" onclick="selectDecision('cost')">Reduce Costs</button>
+    <button class="action" onclick="selectDecision('nothing')">Do Nothing</button>
+
+    <br><br>
+    <button id="runBtn" onclick="runDecision()">⚡ Run Decision</button>
+
+    <div id="result"></div>
+  </div>
+
+</div>
+
+<script>
+
+// -------- DATA GENERATION --------
+let data = [];
+
+for (let i = 1; i <= 30; i++) {
+  data.push({
+    month: "M" + i,
+    sales: Math.floor(Math.random() * 500 + 200),
+    inventory: Math.floor(Math.random() * 300 + 100)
+  });
+}
+
+// -------- TABLE --------
+let tbody = document.querySelector("#dataTable tbody");
+
+data.forEach(d => {
+  let row = `
+    <tr>
+      <td>${d.month}</td>
+      <td>${d.sales}</td>
+      <td>${d.inventory}</td>
+    </tr>
+  `;
+  tbody.innerHTML += row;
+});
+
+// -------- CHART --------
+let ctx = document.getElementById("chart").getContext("2d");
+
+let chart = new Chart(ctx, {
+  type: "line",
+  data: {
+    labels: data.map(d => d.month),
+    datasets: [
+      {
+        label: "Sales",
+        data: data.map(d => d.sales),
+        borderColor: "#38bdf8",
+        fill: false
+      },
+      {
+        label: "Inventory",
+        data: data.map(d => d.inventory),
+        borderColor: "#22c55e",
+        fill: false
+      }
+    ]
+  }
+});
+
+// -------- DECISION LOGIC --------
+let selected = "";
+
+function selectDecision(choice) {
+  selected = choice;
+  document.getElementById("result").innerHTML = "Selected: " + choice;
+}
+
+// -------- SIMULATION --------
+function runDecision() {
+
+  // ✅ Get last 3 months
+  let recent = data.slice(-3);
+
+  let avgSales = recent.reduce((a,b) => a + b.sales, 0) / recent.length;
+  let avgInventory = recent.reduce((a,b) => a + b.inventory, 0) / recent.length;
+
+  let salesLevel = avgSales > 400 ? "high" : "low";
+  let inventoryLevel = avgInventory > 200 ? "high" : "low";
+
+  let resultText = "";
+  let className = "";
+
+  // ✅ Add scenario display (very important for learning)
+  let scenario = `<b>Scenario (Last 3 Months):</b><br>
+  📈 Sales: ${salesLevel.toUpperCase()} (${avgSales.toFixed(0)})<br>
+  📦 Inventory: ${inventoryLevel.toUpperCase()} (${avgInventory.toFixed(0)})<br><br>`;
+
+  // -------- SCENARIOS --------
+
+  if (salesLevel === "high" && inventoryLevel === "low") {
+
+    if (selected === "inventory") {
+      resultText = "✅ BEST DECISION: You increased supply while demand is high.<br><br>📦 This prevents stockouts and allows the business to capture existing demand.";
+      className = "good";
+    }
+
+    else if (selected === "marketing") {
+      resultText = "❌ POOR DECISION: You increased demand when inventory is already low.<br><br>⚠️ Customers will not find products → lost sales.";
+      className = "bad";
+    }
+
+    else if (selected === "cost") {
+      resultText = "⚠️ MISALIGNED: Cost reduction does not address inventory shortages.<br><br>📉 Revenue opportunity is still lost.";
+      className = "bad";
+    }
+
+    else {
+      resultText = "❌ NO ACTION: Demand exceeds supply and nothing was done.<br><br>💸 This leads to lost revenue and dissatisfied customers.";
+      className = "bad";
+    }
+  }
+
+  else if (salesLevel === "low" && inventoryLevel === "high") {
+
+    if (selected === "marketing") {
+      resultText = "✅ BEST DECISION: You stimulate demand when inventory is high.<br><br>📈 This helps move products and reduces holding costs.";
+      className = "good";
+    }
+
+    else if (selected === "inventory") {
+      resultText = "❌ POOR DECISION: You added inventory when stock is already high.<br><br>📦 Overstock risk increases.";
+      className = "bad";
+    }
+
+    else if (selected === "cost") {
+      resultText = "⚠️ PARTIAL: Cost reduction helps but doesn't fix slow sales.<br><br>💡 Demand problem remains.";
+      className = "bad";
+    }
+
+    else {
+      resultText = "❌ NO ACTION: Inventory continues to sit idle.<br><br>💸 Storage costs increase with no revenue growth.";
+      className = "bad";
+    }
+  }
+
+  else if (salesLevel === "low" && inventoryLevel === "low") {
+
+    if (selected === "marketing") {
+      resultText = "✅ GOOD DECISION: You attempt to increase demand.<br><br>📈 Growth may occur, but inventory must be monitored closely.";
+      className = "good";
+    }
+
+    else if (selected === "inventory") {
+      resultText = "⚠️ RISKY: Increasing inventory without demand.<br><br>📦 Could lead to overstock if sales don't improve.";
+      className = "bad";
+    }
+
+    else if (selected === "cost") {
+      resultText = "✅ GOOD: Reducing costs protects profit during low activity.<br><br>⚖️ Stabilizes business in short term.";
+      className = "good";
+    }
+
+    else {
+      resultText = "⚠️ NO ACTION: No growth strategy implemented.<br><br>📉 Business remains stagnant.";
+      className = "bad";
+    }
+  }
+
+  else { // high sales + high inventory
+
+    if (selected === "cost") {
+      resultText = "✅ GOOD DECISION: Optimize costs while operations are stable.<br><br>💰 Maximizes profitability.";
+      className = "good";
+    }
+
+    else if (selected === "marketing") {
+      resultText = "⚠️ UNNECESSARY: Demand is already strong.<br><br>🔥 Risk of overloading operations.";
+      className = "bad";
+    }
+
+    else if (selected === "inventory") {
+      resultText = "⚠️ UNNECESSARY: Inventory is already sufficient.<br><br>📦 Overstock risk.";
+      className = "bad";
+    }
+
+    else {
+      resultText = "✅ STABLE: No action maintains balance.<br><br>⚖️ System remains efficient.";
+      className = "good";
+    }
+  }
+
+  document.getElementById("result").innerHTML =
+    `<span class="${className}">${scenario}${resultText}</span>`;
+}
+
+</script>
+
+</body>
+</html>

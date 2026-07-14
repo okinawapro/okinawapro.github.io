@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<title>SQL Treasure Hunt – Taylor Swift Eras Tour</title>
+
+<style>
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  padding:20px;
+  background:#141414;
+  color:#f2f2f2;
+  font-family:Arial, Helvetica, sans-serif;
+}
+
+.container{
+  max-width:1300px;
+  margin:auto;
+}
+
+h1,h2,h3{
+  text-align:center;
+}
+
+h1{
+  color:#ff4da6;
+  margin-bottom:0;
+}
+
+h2{
+  color:#ffd966;
+  margin-top:8px;
+}
+
+.story{
+  background:#202020;
+  border-left:5px solid #ff4da6;
+  padding:16px;
+  border-radius:6px;
+  margin-bottom:24px;
+  line-height:1.6;
+}
+
+.tables{
+  background:#222;
+  padding:12px;
+  border-radius:6px;
+  margin-bottom:25px;
+}
+
+.table-tag{
+  display:inline-block;
+  margin:4px;
+  padding:6px 10px;
+  border-radius:4px;
+  background:#333;
+  font-family:monospace;
+}
+
+.lock{
+  display:none;
+  background:#1e1e1e;
+  padding:18px;
+  border-radius:8px;
+  margin-bottom:22px;
+  border:1px solid #333;
+}
+
+.lock.active{
+  display:block;
+}
+
+.row{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+textarea{
+  width:100%;
+  height:160px;
+  background:#0d0d0d;
+  color:#00ff99;
+  border:1px solid #444;
+  border-radius:6px;
+  padding:10px;
+  resize:vertical;
+  font-family:monospace;
+  font-size:14px;
+}
+
+.results{
+  background:#000;
+  border:1px solid #444;
+  border-radius:6px;
+  padding:10px;
+  min-height:160px;
+  overflow:auto;
+}
+
+button{
+  margin-top:10px;
+  margin-right:8px;
+  padding:8px 14px;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.run-btn{
+  background:#00b894;
+  color:white;
+}
+
+.solve-btn{
+  background:#0984e3;
+  color:white;
+}
+
+.hint-btn{
+  background:#fdcb6e;
+  color:black;
+}
+
+.next-btn{
+  background:#6c5ce7;
+  color:white;
+}
+
+.next-btn:disabled{
+  background:#555;
+  cursor:not-allowed;
+  opacity:0.5;
+}
+
+button:hover:not(:disabled){
+  opacity:0.9;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-family:monospace;
+}
+
+th, td{
+  border:1px solid #444;
+  padding:6px;
+  text-align:left;
+}
+
+th{
+  background:#333;
+  color:#ffd966;
+}
+
+.hint{
+  display:none;
+  margin-top:12px;
+  color:#ffd966;
+  font-style:italic;
+}
+
+.success{
+  color:#00ff99;
+  margin-top:10px;
+  font-weight:bold;
+}
+
+.error{
+  color:#ff7b7b;
+  font-weight:bold;
+}
+
+.overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.85);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+}
+
+.win-box{
+  background:#222;
+  border:3px solid #ff4da6;
+  padding:40px;
+  border-radius:12px;
+  text-align:center;
+  animation:pop .5s ease;
+}
+
+.win-box h1{
+  color:#ff4da6;
+  font-size:48px;
+}
+
+.win-box p{
+  font-size:22px;
+}
+
+@keyframes pop{
+  from{
+    transform:scale(.5);
+    opacity:0;
+  }
+  to{
+    transform:scale(1);
+    opacity:1;
+  }
+}
+
+code{
+  background:#333;
+  padding:2px 6px;
+  border-radius:4px;
+}
+
+@media(max-width:900px){
+  .row{
+    grid-template-columns:1fr;
+  }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🎤 SQL Treasure Hunt</h1>
+<h2>Taylor Swift – The Eras Tour</h2>
+
+<div class="story">
+
+You are part of the Eras Tour analytics team.
+
+Taylor Swift’s management wants to identify the
+<b>most valuable surprise song performance</b>
+for the next concert.
+
+Using SQL, you will explore tour data, song popularity,
+album information, and streaming statistics.
+
+Complete each challenge to unlock the next step
+and help prepare the perfect Eras Tour setlist.
+
+</div>
+
+<div class="tables">
+
+<b>Available Tables</b><br><br>
+
+<span class="table-tag">songs</span>
+<span class="table-tag">albums</span>
+<span class="table-tag">streaming_stats</span>
+
+<hr>
+
+<p><b>songs</b></p>
+<code>
+song_name, album, era, concert_city
+</code>
+
+<p><b>albums</b></p>
+<code>
+album, release_year
+</code>
+
+<p><b>streaming_stats</b></p>
+<code>
+song_name, streams_millions
+</code>
+
+</div>
+
+<div id="locks"></div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   DATABASE
+========================================================= */
+
+const TABLES = {
+
+songs:[
+
+{ song_name:"Cruel Summer", album:"Lover", era:"Lover", concert_city:"Tokyo" },
+{ song_name:"Blank Space", album:"1989", era:"1989", concert_city:"Los Angeles" },
+{ song_name:"Anti-Hero", album:"Midnights", era:"Midnights", concert_city:"Sydney" },
+{ song_name:"Love Story", album:"Fearless", era:"Fearless", concert_city:"London" },
+{ song_name:"Style", album:"1989", era:"1989", concert_city:"Singapore" },
+{ song_name:"Cardigan", album:"Folklore", era:"Folklore", concert_city:"Paris" },
+{ song_name:"You Belong With Me", album:"Fearless", era:"Fearless", concert_city:"New York" },
+{ song_name:"Shake It Off", album:"1989", era:"1989", concert_city:"Toronto" }
+
+],
+
+albums:[
+
+{ album:"Lover", release_year:2019 },
+{ album:"1989", release_year:2014 },
+{ album:"Midnights", release_year:2022 },
+{ album:"Fearless", release_year:2008 },
+{ album:"Folklore", release_year:2020 }
+
+],
+
+streaming_stats:[
+
+{ song_name:"Cruel Summer", streams_millions:2100 },
+{ song_name:"Blank Space", streams_millions:2400 },
+{ song_name:"Anti-Hero", streams_millions:1900 },
+{ song_name:"Love Story", streams_millions:2600 },
+{ song_name:"Style", streams_millions:1800 },
+{ song_name:"Cardigan", streams_millions:1200 },
+{ song_name:"You Belong With Me", streams_millions:2300 },
+{ song_name:"Shake It Off", streams_millions:3000 }
+
+]
+
+};
+
+/* =========================================================
+   LESSONS
+========================================================= */
+
+const LESSONS = [
+
+{
+title:"1. View All Songs",
+goal:"Use SELECT * to display all songs in the songs table.",
+
+hint:"This step teaches how to retrieve every column and row from a table using the wildcard symbol.",
+
+solution:"SELECT * FROM songs;",
+
+checks:["select *","from songs"]
+},
+
+{
+title:"2. Select Specific Columns",
+goal:"Display only the song name and album.",
+
+hint:"This step teaches how to retrieve only specific columns instead of the entire table.",
+
+solution:"SELECT song_name, album FROM songs;",
+
+checks:["select song_name, album","from songs"]
+},
+
+{
+title:"3. Filter with WHERE",
+goal:"Find songs from the 1989 era.",
+
+hint:"This step teaches how to filter records using a condition.",
+
+solution:"SELECT * FROM songs WHERE era = '1989';",
+
+checks:["where era = '1989'"]
+},
+
+{
+title:"4. Combine Tables with INNER JOIN",
+goal:"Display songs together with their album release years.",
+
+hint:"This step teaches how to combine related information from two tables using matching columns.",
+
+solution:"SELECT song_name, release_year FROM songs INNER JOIN albums ON songs.album = albums.album;",
+
+checks:["inner join","on","albums"]
+},
+
+{
+title:"5. GROUP BY + COUNT",
+goal:"Count how many songs belong to each era.",
+
+hint:"This step teaches how to group rows together and count records within each group.",
+
+solution:"SELECT era, COUNT(*) FROM songs GROUP BY era;",
+
+checks:["count(*)","group by era"]
+},
+
+{
+title:"6. Aggregate Functions",
+goal:"Find the highest streaming total.",
+
+hint:"This step teaches how aggregate functions calculate summary values such as maximums and averages.",
+
+solution:"SELECT MAX(streams_millions) FROM streaming_stats;",
+
+checks:["max(streams_millions)"]
+},
+
+{
+title:"7. ORDER BY",
+goal:"Sort songs from highest to lowest streaming totals.",
+
+hint:"This step teaches how to sort query results in descending order.",
+
+solution:"SELECT * FROM streaming_stats ORDER BY streams_millions DESC;",
+
+checks:["order by streams_millions desc"]
+},
+
+{
+title:"8. LIMIT",
+goal:"Find the single most streamed surprise song candidate.",
+
+hint:"This final step combines joins, sorting, and limiting results to identify the top song.",
+
+solution:"SELECT song_name, album, streams_millions FROM songs INNER JOIN streaming_stats ON songs.song_name = streaming_stats.song_name ORDER BY streams_millions DESC LIMIT 1;",
+
+checks:["limit 1","order by streams_millions desc","inner join"]
+}
+
+];
+
+/* =========================================================
+   SQL PARSER
+========================================================= */
+
+function parse(sql){
+
+sql = sql
+.trim()
+.replace(/;/g,"")
+.replace(/\s+/g," ");
+
+const lower = sql.toLowerCase();
+
+const q = {};
+
+const selectMatch = lower.match(/^select (.+?) from /);
+
+if(!selectMatch){
+throw "Invalid SELECT statement";
+}
+
+q.select = selectMatch[1]
+.split(",")
+.map(c=>c.trim());
+
+const fromMatch = lower.match(/ from ([a-z_]+)/);
+
+if(!fromMatch){
+throw "Missing FROM clause";
+}
+
+q.from = fromMatch[1];
+
+const joinMatch = lower.match(
+/ inner join ([a-z_]+) on ([a-z_\.]+)\s*=\s*([a-z_\.]+)/
+);
+
+if(joinMatch){
+
+q.join = {
+table:joinMatch[1],
+left:joinMatch[2].split(".").pop(),
+right:joinMatch[3].split(".").pop()
+};
+}
+
+const whereMatch = sql.match(
+/where\s+([a-z_]+)\s*=\s*'([^']+)'/i
+);
+
+if(whereMatch){
+
+q.where = {
+col:whereMatch[1],
+val:whereMatch[2]
+};
+}
+
+const groupMatch = lower.match(/ group by ([a-z_]+)/);
+
+if(groupMatch){
+q.groupBy = groupMatch[1];
+}
+
+const orderMatch = lower.match(
+/ order by ([a-z_]+)( desc| asc)?/
+);
+
+if(orderMatch){
+
+q.order = {
+col:orderMatch[1],
+dir:(orderMatch[2] || "asc").trim()
+};
+}
+
+const limitMatch = lower.match(/ limit (\d+)/);
+
+if(limitMatch){
+q.limit = parseInt(limitMatch[1]);
+}
+
+if(lower.includes("count(")) q.aggregate = "COUNT";
+if(lower.includes("sum(")) q.aggregate = "SUM";
+if(lower.includes("max(")) q.aggregate = "MAX";
+if(lower.includes("min(")) q.aggregate = "MIN";
+if(lower.includes("avg(")) q.aggregate = "AVG";
+
+return q;
+}
+
+/* =========================================================
+   EXECUTION ENGINE
+========================================================= */
+
+function execSQL(sql){
+
+const q = parse(sql);
+
+let rows = [...TABLES[q.from]];
+
+if(q.join){
+
+rows = rows.flatMap(r => {
+
+return TABLES[q.join.table]
+.filter(j => r[q.join.left] === j[q.join.right])
+.map(j => ({...r, ...j}));
+
+});
+}
+
+if(q.where){
+
+rows = rows.filter(r =>
+String(r[q.where.col]).toLowerCase() ===
+q.where.val.toLowerCase()
+);
+}
+
+if(q.groupBy){
+
+const grouped = {};
+
+rows.forEach(r => {
+
+const key = r[q.groupBy];
+
+if(!grouped[key]){
+grouped[key] = [];
+}
+
+grouped[key].push(r);
+
+});
+
+rows = Object.entries(grouped).map(([key, vals]) => ({
+[q.groupBy]:key,
+count:vals.length
+}));
+}
+
+if(q.aggregate){
+
+const match = sql.match(/\((.*?)\)/);
+
+const col = match ? match[1].trim() : null;
+
+let value = null;
+
+if(q.aggregate === "COUNT"){
+
+value = rows.length;
+
+} else {
+
+const nums = rows.map(r => Number(r[col]));
+
+if(q.aggregate === "SUM"){
+value = nums.reduce((a,b)=>a+b,0);
+}
+
+if(q.aggregate === "MAX"){
+value = Math.max(...nums);
+}
+
+if(q.aggregate === "MIN"){
+value = Math.min(...nums);
+}
+
+if(q.aggregate === "AVG"){
+value = nums.reduce((a,b)=>a+b,0)/nums.length;
+}
+}
+
+return [{
+[q.aggregate]:value
+}];
+}
+
+if(!(q.select.length === 1 && q.select[0] === "*")){
+
+rows = rows.map(r => {
+
+const obj = {};
+
+q.select.forEach(col => {
+
+if(col.includes("(")) return;
+
+const clean = col.split(".").pop();
+
+obj[clean] = r[clean];
+
+});
+
+return obj;
+
+});
+}
+
+if(q.order){
+
+rows.sort((a,b)=>{
+
+const A = a[q.order.col];
+const B = b[q.order.col];
+
+if(typeof A === "number" && typeof B === "number"){
+
+return q.order.dir === "desc"
+? B-A
+: A-B;
+}
+
+return q.order.dir === "desc"
+? String(B).localeCompare(String(A))
+: String(A).localeCompare(String(B));
+
+});
+}
+
+if(q.limit != null){
+
+rows = rows.slice(0, q.limit);
+}
+
+return rows;
+}
+
+/* =========================================================
+   TABLE RENDERER
+========================================================= */
+
+function renderTable(target, rows){
+
+if(!rows || rows.length === 0){
+
+target.innerHTML = "<em>No records returned.</em>";
+return;
+}
+
+const cols = Object.keys(rows[0]);
+
+let html = "<table><tr>";
+
+cols.forEach(c=>{
+html += `<th>${c}</th>`;
+});
+
+html += "</tr>";
+
+rows.forEach(r=>{
+
+html += "<tr>";
+
+cols.forEach(c=>{
+html += `<td>${r[c]}</td>`;
+});
+
+html += "</tr>";
+
+});
+
+html += "</table>";
+
+target.innerHTML = html;
+}
+
+/* =========================================================
+   UI GENERATION
+========================================================= */
+
+const locks = document.getElementById("locks");
+
+LESSONS.forEach((lesson, i)=>{
+
+locks.innerHTML += `
+
+<div class="lock ${i===0 ? "active" : ""}" id="lock${i}">
+
+<h3>${lesson.title}</h3>
+
+<p>${lesson.goal}</p>
+
+<div class="row">
+
+<div>
+
+<textarea id="q${i}" placeholder="Write your SQL query here..."></textarea>
+
+<br>
+
+<button class="run-btn" onclick="run(${i})">
+Run Query
+</button>
+
+<button class="solve-btn" onclick="solve(${i})">
+Show Solution
+</button>
+
+<button class="hint-btn" onclick="hint(${i})">
+Hint
+</button>
+
+<button 
+class="next-btn"
+id="next${i}"
+onclick="nextStep(${i})"
+disabled>
+Next Step →
+</button>
+
+<div class="hint" id="h${i}">
+${lesson.hint}
+</div>
+
+<div id="msg${i}"></div>
+
+</div>
+
+<div class="results" id="r${i}">
+Results will appear here...
+</div>
+
+</div>
+
+</div>
+`;
+});
+
+/* =========================================================
+   RUN QUERY
+========================================================= */
+
+function run(i){
+
+const sql = document
+.getElementById("q"+i)
+.value;
+
+const resultBox = document.getElementById("r"+i);
+const msgBox = document.getElementById("msg"+i);
+const nextBtn = document.getElementById("next"+i);
+
+try{
+
+const rows = execSQL(sql);
+
+renderTable(resultBox, rows);
+
+const normalized = sql
+.toLowerCase()
+.replace(/\s+/g," ");
+
+const passed = LESSONS[i].checks.every(c =>
+normalized.includes(c)
+);
+
+if(passed){
+
+msgBox.innerHTML = `
+<div class="success">
+✅ Correct! Review your query results, then continue.
+</div>`;
+
+nextBtn.disabled = false;
+
+} else {
+
+msgBox.innerHTML = `
+<div class="error">
+Query executed, but it does not complete the lesson objective.
+</div>`;
+
+nextBtn.disabled = true;
+}
+
+} catch(err){
+
+resultBox.innerHTML = `
+<div class="error">
+ERROR: ${err}
+</div>`;
+
+nextBtn.disabled = true;
+}
+}
+
+/* =========================================================
+   NEXT STEP
+========================================================= */
+
+function nextStep(i){
+
+document
+.getElementById("lock"+i)
+.classList.remove("active");
+
+if(LESSONS[i+1]){
+
+document
+.getElementById("lock"+(i+1))
+.classList.add("active");
+
+window.scrollTo({
+top:document.getElementById("lock"+(i+1)).offsetTop - 20,
+behavior:"smooth"
+});
+
+} else {
+
+celebrate();
+}
+}
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function solve(i){
+
+document.getElementById("q"+i).value =
+LESSONS[i].solution;
+}
+
+function hint(i){
+
+const h = document.getElementById("h"+i);
+
+h.style.display =
+h.style.display === "block"
+? "none"
+: "block";
+}
+
+/* =========================================================
+   WIN SCREEN
+========================================================= */
+
+function celebrate(){
+
+const overlay = document.createElement("div");
+
+overlay.className = "overlay";
+
+overlay.innerHTML = `
+
+<div class="win-box">
+
+<h1>🎤 TOUR ANALYSIS COMPLETE</h1>
+
+<p>
+You identified the best surprise song candidate:
+</p>
+
+<h2>Shake It Off — 3000 Million Streams</h2>
+
+<p>
+You mastered the fundamentals of SQL!
+</p>
+
+</div>
+`;
+
+document.body.appendChild(overlay);
+
+setTimeout(()=>{
+overlay.remove();
+},7000);
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SWOT Analysis – New Software Developer</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", Arial, sans-serif;
+  background: linear-gradient(135deg, #e2e8f0, #f8fafc);
+  color: #0f172a;
+}
+
+header {
+  text-align: center;
+  padding: 24px;
+}
+
+header h1 {
+  margin-bottom: 6px;
+}
+
+main {
+  padding: 20px;
+}
+
+/* CARD AREA */
+.cards-panel {
+  background: #f1f5f9;
+  padding: 16px;
+  border-radius: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: #ffffff;
+  color: #0f172a; /* FIX: force readable text */
+  padding: 14px 16px;
+  border-radius: 10px;
+  box-shadow: 0 6px 14px rgba(0,0,0,.15);
+  cursor: grab;
+  user-select: none;
+  font-weight: 500;
+}
+
+.correct { background: #bbf7d0 !important; }
+.incorrect { background: #fecaca !important; }
+
+/* SWOT GRID */
+.swot-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.swot {
+  min-height: 170px;
+  padding: 14px;
+  border-radius: 18px;
+  color: #ffffff;
+}
+
+.swot h3 {
+  text-align: center;
+  margin-top: 0;
+  font-size: 20px;
+}
+
+/* Power colors */
+.swot[data-role="strengths"]     { background: #1e40af; }
+.swot[data-role="weaknesses"]    { background: #b45309; }
+.swot[data-role="opportunities"] { background: #166534; }
+.swot[data-role="threats"]       { background: #991b1b; }
+
+/* BUTTONS */
+.buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 24px 0;
+}
+
+button {
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 10px;
+  border: none;
+  background: #0f172a;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #020617;
+}
+
+/* SUCCESS MESSAGE */
+#successMessage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  background: #22c55e;
+  color: #022c22;
+  padding: 36px 46px;
+  border-radius: 26px;
+  text-align: center;
+  font-size: 36px;
+  font-weight: 700;
+  opacity: 0;
+  transition: transform 0.6s ease, opacity 0.6s ease;
+  z-index: 999;
+}
+
+#successMessage.show {
+  transform: translate(-50%, -50%) scale(1.4);
+  opacity: 1;
+}
+
+/* KEY TAKEAWAY */
+.key-takeaway {
+  margin-top: 30px;
+  padding: 25px 30px;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #f8fafc;
+  border-radius: 18px;
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
+}
+
+.key-takeaway.hidden {
+  display: none;
+}
+
+.key-takeaway h2 {
+  margin-top: 0;
+  color: #38bdf8;
+  font-size: 26px;
+}
+
+.key-takeaway p {
+  font-size: 18px;
+  line-height: 1.7;
+  max-width: 900px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>📊 SWOT Analysis — New Software Developer</h1>
+  <p>Build clarity. Create leverage. Own your strategy.</p>
+</header>
+
+<main>
+<!-- SWOT GRID -->
+<div class="swot-grid">
+  <div class="swot" data-role="strengths"><h3>Strengths</h3></div>
+  <div class="swot" data-role="weaknesses"><h3>Weaknesses</h3></div>
+  <div class="swot" data-role="opportunities"><h3>Opportunities</h3></div>
+  <div class="swot" data-role="threats"><h3>Threats</h3></div>
+</div>
+
+<!-- CARDS -->
+<div class="cards-panel" id="pool"></div>
+
+<div class="buttons">
+  <button onclick="check()">✅ Check</button>
+  <button onclick="solve()">🧠 Solve</button>
+  <button onclick="resetGame()">🔄 Reset</button>
+</div>
+
+<section class="key-takeaway hidden" id="keyTakeaway">
+  <h2>Key Takeaway</h2>
+  <p>
+    A SWOT analysis is not about labeling traits — it is about building strategic
+    self‑awareness that leads to action. <br> By clearly separating what you control
+    (strengths and weaknesses) from what you must respond to (opportunities and threats),
+    you gain power over your decisions. 
+    <br><br>SWOT shifts thinking from “What do I have?” to “I will 🏃‍➡️...”
+  </p>
+</section>
+
+</main>
+
+<div id="successMessage">🥰<br>You Rock!!!</div>
+
+<script>
+const cardsData = [
+  { text: "Strong Python programming foundation", answer: "strengths" },
+  { text: "Formal CS education in algorithms & data structures", answer: "strengths" },
+  { text: "Experience using Git and collaborating in teams", answer: "strengths" },
+
+  { text: "Limited large-scale production system exposure", answer: "weaknesses" },
+  { text: "Small professional network", answer: "weaknesses" },
+  { text: "System design skills still developing", answer: "weaknesses" },
+
+  { text: "High demand for Python in AI and data science", answer: "opportunities" },
+  { text: "Remote work increases job access globally", answer: "opportunities" },
+  { text: "Open-source contributions build credibility", answer: "opportunities" },
+
+  { text: "Intense competition for entry-level roles", answer: "threats" },
+  { text: "Rapid shifts in frameworks and tech stacks", answer: "threats" },
+  { text: "Industry layoffs and hiring uncertainty", answer: "threats" }
+];
+
+const pool = document.getElementById("pool");
+let dragged = null;
+
+function shuffle(arr) {
+  return [...arr].sort(() => Math.random() - 0.5);
+}
+
+function loadCards() {
+  pool.innerHTML = "";
+  shuffle(cardsData).forEach(c => {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.textContent = c.text;
+    card.dataset.answer = c.answer;
+    card.draggable = true;
+    pool.appendChild(card);
+  });
+  enableDrag();
+}
+
+function enableDrag() {
+  document.querySelectorAll(".card").forEach(card =>
+    card.addEventListener("dragstart", () => dragged = card)
+  );
+}
+
+document.querySelectorAll(".swot").forEach(box => {
+  box.addEventListener("dragover", e => e.preventDefault());
+  box.addEventListener("drop", () => dragged && box.appendChild(dragged));
+});
+
+function check() {
+  let allCorrect = true;
+  document.querySelectorAll(".card").forEach(card => {
+    card.classList.remove("correct","incorrect");
+    const role = card.parentElement.dataset.role;
+    if (role === card.dataset.answer) {
+      card.classList.add("correct");
+    } else {
+      card.classList.add("incorrect");
+      allCorrect = false;
+    }
+  });
+  if (allCorrect) {
+    showSuccess();
+    document.getElementById("keyTakeaway").classList.remove("hidden");
+  }
+}
+
+function showSuccess() {
+  const msg = document.getElementById("successMessage");
+  msg.classList.add("show");
+  setTimeout(() => msg.classList.remove("show"), 3000);
+}
+
+function solve() {
+  document.querySelectorAll(".card").forEach(card => {
+    document.querySelector(`.swot[data-role="${card.dataset.answer}"]`)
+      .appendChild(card);
+    card.classList.add("correct");
+  });
+  document.getElementById("keyTakeaway").classList.remove("hidden");
+}
+
+function resetGame() {
+  document.querySelectorAll(".swot .card").forEach(c => c.remove());
+  loadCards();
+  document.getElementById("successMessage").classList.remove("show");
+  document.getElementById("keyTakeaway").classList.add("hidden");
+}
+
+loadCards();
+</script>
+
+</body>
+</html>

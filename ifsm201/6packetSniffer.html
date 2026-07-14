@@ -1,0 +1,370 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security: The Packet Inspector</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #e74c3c; 
+            --highlight: #f1c40f; 
+            --bg-light: #ecf0f1;
+            --layer-eth: #d1e7dd; 
+            --layer-ip: #cfe2f3;  
+            --layer-tcp: #f8d7da; 
+            --layer-data: #fff3cd; 
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-light); color: var(--primary); line-height: 1.6; }
+
+        header { background: var(--primary); color: #fff; padding: 1.5rem; text-align: center; border-bottom: 4px solid #3498db; }
+        h1 { font-weight: 300; font-size: 2.2rem; }
+        .subtitle { font-size: 1rem; color: #bbb; }
+
+        main { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+
+        /* Instructional Context */
+        .intro-block { background: #fff; padding: 2rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: var(--shadow); }
+        .concept-diagram { text-align: center; margin: 1.5rem 0; }
+        .diagram-caption { font-size: 0.9rem; color: #7f8c8d; max-width: 600px; margin: 0.5rem auto; }
+
+        /* Main Activity Layout */
+        .activity-container { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; }
+
+        /* Capture Pane (Left) */
+        .capture-pane { background: #fff; border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; display: flex; flex-direction: column; }
+        .pane-header { background: var(--secondary); color: #fff; padding: 1rem; font-weight: bold; border-bottom: 1px solid #444; }
+        .packet-list { overflow-y: auto; flex-grow: 1; max-height: 600px; } 
+
+        .packet-item { display: grid; grid-template-columns: 40px 1fr 100px; align-items: center; padding: 1rem; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.2s; position: relative;}
+        .packet-item:hover { background-color: #f9f9f9; }
+        .packet-item.selected { background-color: #e3f2fd; border-left: 4px solid #2196f3; }
+
+        .packet-id { font-weight: bold; color: #7f8c8d; }
+        .packet-summary { font-size: 0.95rem; }
+        .packet-flags { text-align: right; }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; text-align: center;}
+        .badge-secure { background-color: #d4edda; color: #155724; }
+        .badge-cleartext { background-color: #fff3cd; color: #856404; }
+        .badge-alert { background-color: #f8d7da; color: #721c24; animation: pulse 1.5s infinite; border: 2px solid #721c24;}
+        .badge-info { background-color: #e8f4fd; color: #1d6fa5; }
+        .badge-dos { background-color: #fce8e6; color: #a83232; border: 1px solid #a83232; }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        /* Details Pane (Right) */
+        .details-pane { background: #fff; border-radius: 8px; box-shadow: var(--shadow); display: flex; flex-direction: column; min-height: 600px; }
+        .details-pane .pane-header { display: flex; justify-content: space-between; align-items: center; }
+        .reset-btn { background: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem;}
+
+        .details-content { padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-start; }
+        .detail-placeholder { text-align: center; color: #7f8c8d; margin-top: 5rem; font-style: italic;}
+
+        /* Stack Visual */
+        .protocol-stack { display: flex; flex-direction: column-reverse; margin-top: 1rem; border: 1px solid #ccc; border-radius: 4px; overflow: hidden; margin-bottom: 1.5rem; }
+        .stack-layer { padding: 0.8rem; border-bottom: 1px solid #ccc; font-family: monospace; font-size: 0.9rem; }
+        .stack-layer:first-child { border-bottom: none; }
+        .layer-title { font-weight: bold; text-transform: uppercase; margin-bottom: 0.2rem; color: rgba(0,0,0,0.6); font-size: 0.75rem;}
+
+        #layer-data { position: relative; }
+        .payload-text { white-space: pre-wrap; word-wrap: break-word; color: #333; font-weight: bold;}
+        .magnified { color: #e74c3c !important; font-weight: bold; background-color: #fceabe; padding: 2px; border-radius: 2px;}
+
+        /* Dynamic Knowledge Check Block */
+        .knowledge-check { background-color: var(--secondary); color: white; padding: 1.5rem; border-radius: 8px; margin-top: 1.5rem; display: none;} 
+        .kc-lesson { background: rgba(255,255,255,0.1); border-left: 4px solid #3498db; padding: 0.75rem; margin-bottom: 1rem; font-size: 0.9rem; border-radius: 0 4px 4px 0;}
+        .kc-question { font-size: 1.1rem; margin-bottom: 1rem; color: var(--highlight); font-weight: 600;}
+        .options { display: grid; gap: 0.5rem; }
+        .option-btn { background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 0.75rem 1rem; text-align: left; border-radius: 4px; cursor: pointer; transition: 0.2s; font-size: 0.95rem;}
+        .option-btn:hover { background: rgba(255,255,255,0.15); border-color: var(--highlight); }
+        
+        .feedback { margin-top: 1rem; padding: 1rem; border-radius: 4px; display: none; font-size: 0.95rem;}
+        .feedback.correct { background-color: #d4edda; color: #155724; display: block;}
+        .feedback.incorrect { background-color: #f8d7da; color: #721c24; display: block;}
+
+        footer { text-align: center; color: #7f8c8d; padding: 2rem; font-size: 0.85rem; border-top: 1px solid #eee; margin-top: 2rem; }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Class Activity: Network Security</h1>
+    <div class="subtitle">Activity 1: Deep Packet Inspector & Threat Analyzer</div>
+</header>
+
+<main>
+    <div class="intro-block">
+        <h2>Instructional Context: Understanding Packet Analysis</h2>
+        <p>In this module, we are moving beyond abstract models and looking at the data that traverses a network wire. Every packet shares a fundamental anatomy: it is encapsulated, meaning smaller payloads are wrapped inside outer delivery headers.</p>
+        <p>As security analysts, we perform <strong>Deep Packet Inspection (DPI)</strong>. This allows us to spot anomalies, structural weaknesses, and information leaks. <strong>Click on each packet in the capture stream below to analyze its layers, study its associated security vector, and test your knowledge.</strong></p>
+        
+        <div class="concept-diagram">
+            <svg width="300" height="150" viewBox="0 0 300 150">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#7f8c8d"/>
+                    </marker>
+                </defs>
+                <rect x="10" y="10" width="280" height="30" rx="4" fill="#d1e7dd" stroke="#94c1a9"/>
+                <text x="150" y="30" text-anchor="middle" font-family="monospace" font-size="12">Layer 2: ETHERNET Header</text>
+                
+                <rect x="30" y="50" width="240" height="30" rx="4" fill="#cfe2f3" stroke="#9fc5e8"/>
+                <text x="150" y="70" text-anchor="middle" font-family="monospace" font-size="12">Layer 3: IP Header</text>
+                
+                <rect x="50" y="90" width="200" height="30" rx="4" fill="#fff3cd" stroke="#ffe599"/>
+                <text x="150" y="110" text-anchor="middle" font-family="monospace" font-size="12">DATA PAYLOAD</text>
+                
+                <path d="M 20,40 L 20,110" stroke="#7f8c8d" stroke-width="2" marker-end="url(#arrow)"/>
+                <text x="15" y="75" transform="rotate(-90 15,75)" font-size="9" fill="#7f8c8d">Encapsulation</text>
+            </svg>
+        </div>
+    </div>
+
+    <div class="activity-container">
+        <div class="capture-pane">
+            <div class="pane-header">CAPTURE STREAM (Live Interface)</div>
+            <div class="packet-list" id="packet-list">
+                <div class="packet-item" data-pid="1" onclick="selectPacket(1)">
+                    <div class="packet-id">1</div>
+                    <div class="packet-summary">HTTP GET /index.html (Port 80)</div>
+                    <div class="packet-flags"><span class="badge badge-cleartext">Cleartext</span></div>
+                </div>
+                <div class="packet-item" data-pid="2" onclick="selectPacket(2)">
+                    <div class="packet-id">2</div>
+                    <div class="packet-summary">TCP SYN Handshake</div>
+                    <div class="packet-flags"><span class="badge badge-info">Handshake</span></div>
+                </div>
+                <div class="packet-item" data-pid="3" onclick="selectPacket(3)">
+                    <div class="packet-id">3</div>
+                    <div class="packet-summary">HTTPS Application Data (Port 443)</div>
+                    <div class="packet-flags"><span class="badge badge-secure">Encrypted</span></div>
+                </div>
+                <div class="packet-item" data-pid="4" onclick="selectPacket(4)">
+                    <div class="packet-id">4</div>
+                    <div class="packet-summary">HTTP POST /admin.php (Port 80)</div>
+                    <div class="packet-flags"><span class="badge badge-alert">CRITICAL</span></div>
+                </div>
+                 <div class="packet-item" data-pid="5" onclick="selectPacket(5)">
+                    <div class="packet-id">5</div>
+                    <div class="packet-summary">DNS Query: securebank.com</div>
+                    <div class="packet-flags"><span class="badge badge-cleartext">DNS</span></div>
+                </div>
+                <div class="packet-item" data-pid="6" onclick="selectPacket(6)">
+                    <div class="packet-id">6</div>
+                    <div class="packet-summary">TCP SYN [Bulk Stream Analysis]</div>
+                    <div class="packet-flags"><span class="badge badge-dos">DoS Flood</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="details-pane">
+            <div class="pane-header">
+                <span>PACKET DETAIL VIEW</span>
+                <button class="reset-btn" onclick="resetActivity()">Reset</button>
+            </div>
+            <div class="details-content" id="details-content">
+                <div class="detail-placeholder">Select a packet from the capture stream (left) to begin deep inspection...</div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    Network Security Fundamentals &copy; 2026
+</footer>
+
+<script>
+    const packetDatabase = {
+        1: {
+            summary: "HTTP GET /index.html",
+            eth: "Src: 00:1A:2B:3C:4D:5E, Dst: F0:E1:D2:C3:B4:A5",
+            ip: "Src: 192.168.1.50 (Client), Dst: 10.0.0.100 (WebServer)",
+            tcp: "Src Port: 44521, Dst Port: 80 (HTTP)",
+            data: "GET /index.html HTTP/1.1\r\nHost: mycompany.com\r\nUser-Agent: Mozilla/5.0...",
+            lesson: "<strong>SECURITY LESSON: Cleartext Risks.</strong> Because standard HTTP (Port 80) does not offer encryption, any device sitting between the client and server can see everything inside the Layer 7 Data Payload. This allows for passive wiretapping/eavesdropping.",
+            question: "If an adversary intercepts this specific packet, what information can they easily glean?",
+            options: [
+                { text: "A) The server's master private cryptographic key.", correct: false },
+                { text: "B) The exact webpage resource requested and host name.", correct: true },
+                { text: "C) Nothing, because Ethernet headers obscure Layer 7 data.", correct: false }
+            ],
+            correctFeedback: "<strong>Correct!</strong> Since the packet is unencrypted text, the requested resource (/index.html) and Host header are fully visible to anyone sniffing the network path.",
+            incorrectFeedback: "<strong>Incorrect.</strong> Look closely at the Layer 7 Data Payload. It contains readable text showing the exact resource being called. Private keys are never passed in this manner."
+        },
+        2: {
+            summary: "TCP Handshake (SYN)",
+            eth: "Src: 00:1A:2B:3C:4D:5E, Dst: F0:E1:D2:C3:B4:A5",
+            ip: "Src: 192.168.1.50, Dst: 10.0.0.100",
+            tcp: "Src Port: 44522, Dst Port: 80, Seq=3829102, Ack=0, Flags=[SYN]",
+            data: "[NO APPLICATION DATA - CONNECTION INITIALIZATION]",
+            lesson: "<strong>SECURITY LESSON: MitM & TCP Weaknesses.</strong> The 3-way handshake (SYN, SYN-ACK, ACK) relies on predictable sequence numbers. If an attacker sits in the path via ARP Spoofing (a Man-in-the-Middle position), they can intercept these packets, manipulate sequence numbers, or hijack the entire session once established.",
+            question: "How can a Man-in-the-Middle (MitM) attacker exploit their position during TCP sequence validation?",
+            options: [
+                { text: "A) They can guess or intercept sequence numbers to inject arbitrary data into the stream.", correct: true },
+                { text: "B) They can instantly crack public key infrastructure algorithms.", correct: false },
+                { text: "C) They can force the Layer 2 MAC addresses to change universally.", correct: false }
+            ],
+            correctFeedback: "<strong>Correct!</strong> By positioning themselves in the middle, an attacker can capture or predict TCP sequence numbers, allowing them to forge data packets that the receiving system will trust as legitimate.",
+            incorrectFeedback: "<strong>Incorrect.</strong> Try again. Think about what is in the Layer 4 header: sequence numbers and flags. A MitM position lets them intercept and spoof these tracking parameters."
+        },
+        3: {
+            summary: "HTTPS Application Data",
+            eth: "Src: 00:1A:2B:3C:4D:5E, Dst: F0:E1:D2:C3:B4:A5",
+            ip: "Src: 192.168.1.50, Dst: 10.0.0.100",
+            tcp: "Src Port: 44520, Dst Port: 443 (HTTPS)",
+            data: "■¶ý®¾ËÉÒÓÔ ¡¢£¤¥¦§¨©ª«¬®¯°±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ",
+            lesson: "<strong>SECURITY LESSON: Cryptographic Integrity.</strong> Port 443 utilizes TLS/SSL to encapsulate Layer 7 payloads. Even if an attacker captures this packet, they will only see randomized high-entropy ciphertext. This guarantees Confidentiality and Data Integrity.",
+            question: "An attacker intercepts this packet via an open Wi-Fi network. What is their tactical advantage?",
+            options: [
+                { text: "A) High. They can easily extract session variables and tokens.", correct: false },
+                { text: "B) Moderate. They can change the payload data without anyone noticing.", correct: false },
+                { text: "C) Low. They can see that traffic is traveling between the two IPs, but the data payload is functionally useless to them.", correct: true }
+            ],
+            correctFeedback: "<strong>Correct!</strong> HTTPS secures confidentiality. The adversary can perform traffic analysis (knowing *who* you talk to), but they cannot parse the actual data layer without the matching private session key.",
+            incorrectFeedback: "<strong>Incorrect.</strong> This packet uses HTTPS (Port 443). Look at the Layer 7 payload: it is completely garbled and randomized ciphertext. It cannot be tampered with or read cleanly."
+        },
+        4: {
+            summary: "HTTP POST /admin.php",
+            eth: "Src: 00:1A:2B:3C:4D:5E, Dst: F0:E1:D2:C3:B4:A5",
+            ip: "Src: 192.168.1.50, Dst: 10.0.0.100",
+            tcp: "Src Port: 44523, Dst Port: 80 (HTTP)",
+            data: "POST /admin.php HTTP/1.1\r\nHost: mycompany.com\r\nContent-Type: application/x-www-form-urlencoded\r\n\r\nuser=admin&<span class='magnified'>password=P@ssw0rd123!</span>&action=delete_user",
+            lesson: "<strong>SECURITY LESSON: Credential Harvesting.</strong> This packet displays an authentication request sent over unencrypted HTTP. This is a critical security vulnerability that allows passive observers to extract domain credentials immediately.",
+            question: "What remediation strategy should the engineering team deploy to resolve this security issue?",
+            options: [
+                { text: "A) Change the admin password to a longer variations daily.", correct: false },
+                { text: "B) Implement HTTP Strict Transport Security (HSTS) and force all traffic to Port 443 (HTTPS).", correct: true },
+                { text: "C) Swap the source and destination IP blocks inside the firewall.", correct: false }
+            ],
+            correctFeedback: "<strong>Correct!</strong> Forcing HTTPS encryption via HSTS configuration ensures all sensitive variables like raw passwords are encrypted end-to-end before being sent across the wire.",
+            incorrectFeedback: "<strong>Incorrect.</strong> Changing passwords won't fix the architectural flaw: the network is passing credentials in raw plain text. The transport layer must be encrypted using TLS/HTTPS."
+        },
+        5: {
+            summary: "DNS Query: securebank.com",
+            eth: "Src: 00:1A:2B:3C:4D:5E, Dst: 8.8.8.8",
+            ip: "Src: 192.168.1.50, Dst: 8.8.8.8 (GoogleDNS)",
+            tcp: "Src Port: 53123, Dst Port: 53 (DNS)",
+            data: "Standard Query: 0x4f2a Type A (IPv4 Address) for 'securebank.com'",
+            lesson: "<strong>SECURITY LESSON: DNS Spoofing / Poisoning.</strong> Traditional DNS queries are unauthenticated and sent over plain text. In a DNS spoofing attack, a rogue actor responds to this query faster than the real DNS server, sending back a fraudulent IP address. The victim's browser then unknowingly routes them to a fake phishing copy of securebank.com.",
+            question: "How does DNS Spoofing exploit a standard client's lookup behavior?",
+            options: [
+                { text: "A) It changes the client's physical MAC address.", correct: false },
+                { text: "B) It feeds the client a fake IP address, redirecting their traffic to a malicious server.", correct: true },
+                { text: "C) It encrypts the user's local hard drive instantly.", correct: false }
+            ],
+            correctFeedback: "<strong>Correct!</strong> Because traditional DNS has no validation built-in, whoever returns an IP mapping first wins. Attackers exploit this to point domain names to their own phishing web servers.",
+            incorrectFeedback: "<strong>Incorrect.</strong> DNS maps domain names to IP addresses. A DNS spoofing attack abuses this system by giving the client a false IP routing destination."
+        },
+        6: {
+            summary: "TCP SYN Flood [Bulk Stream View]",
+            eth: "Src: [SPOOFED MACs], Dst: F0:E1:D2:C3:B4:A5 (Target Server)",
+            ip: "Src: 212.45.12.1, 89.122.4.9, 172.56.9.21..., Dst: 10.0.0.100",
+            tcp: "Flags: [SYN], Win=512, [⚠️ ALERT: 10,000+ matching connections waiting for ACK]",
+            data: "[NO DATA PAYLOAD - MULTIPLE INBOUND UNRESOLVED CONNECTIONS]",
+            lesson: "<strong>SECURITY LESSON: SYN Flood Denial of Service.</strong> You are observing a SYN Flood attack. The attacker sends thousands of TCP `SYN` packets using fake (spoofed) source IP addresses. The server attempts to respond with a `SYN-ACK` and leaves a memory slot open waiting for the final `ACK`. Because the IPs are fake, the final `ACK` never arrives. Historically, this completely ran the server out of memory, crashing it. Today, systems use <em>SYN Cookies</em> to cryptographically validate handshakes without reserving memory prematurely.",
+            question: "How does the 'SYN Cookies' technique mitigate modern legacy memory-exhaustion SYN floods?",
+            options: [
+                { text: "A) It completely bans all incoming TCP connections automatically.", correct: false },
+                { text: "B) It forces the server to compress the OS hard drive during a connection spike.", correct: false },
+                { text: "C) It encodes connection data directly inside the SYN-ACK sequence number, delaying memory assignment until a real client replies.", correct: true }
+            ],
+            correctFeedback: "<strong>Correct!</strong> SYN Cookies are an elegant defense mechanism. The server avoids allocating any RAM buffer states until the client proves it is real by completing the third step of the handshake with a valid ACK number.",
+            incorrectFeedback: "<strong>Incorrect.</strong> SYN Cookies are structural cryptographic changes to the TCP sequence tracking loop. They prevent early allocation of RAM pools so that fake SYN traffic cannot exhaust system resources."
+        }
+    };
+
+    let activePacketId = null;
+
+    function selectPacket(packetId) {
+        activePacketId = packetId;
+
+        const items = document.querySelectorAll('.packet-item');
+        items.forEach(item => item.classList.remove('selected'));
+        const selectedItem = document.querySelector(`.packet-item[data-pid="${packetId}"]`);
+        selectedItem.classList.add('selected');
+
+        const currentData = packetDatabase[packetId];
+        const detailsContainer = document.getElementById('details-content');
+
+        // Apply a visual treatment to warning banners if it is packet 6
+        let customWarningStyle = (packetId === 6) ? "border-bottom: 3px solid #e74c3c; animation: pulse 2s infinite;" : "";
+
+        detailsContainer.innerHTML = `
+            <div>
+                <h3>Deep Analysis: Packet #${packetId}</h3>
+                <p style="color: #7f8c8d; margin-bottom: 1rem;">Detected Application Context: ${currentData.summary}</p>
+
+                <div class="protocol-stack">
+                    <div class="stack-layer" style="background-color: var(--layer-eth);">
+                        <div class="layer-title">Layer 2: Ethernet Link Layer</div>
+                        <div>${currentData.eth}</div>
+                    </div>
+                    <div class="stack-layer" style="background-color: var(--layer-ip);">
+                        <div class="layer-title">Layer 3: Network Internet Layer (IPv4)</div>
+                        <div>${currentData.ip}</div>
+                    </div>
+                    <div class="stack-layer" style="background-color: var(--layer-tcp);" style="${customWarningStyle}">
+                        <div class="layer-title">Layer 4: Transport Layer (TCP)</div>
+                        <div>${currentData.tcp}</div>
+                    </div>
+                    <div class="stack-layer" id="layer-data" style="background-color: var(--layer-data);">
+                        <div class="layer-title">Layer 7: Application Layer (Data Payload)</div>
+                        <div class="payload-text">${currentData.data}</div>
+                    </div>
+                </div>
+
+                <div class="knowledge-check" id="knowledge-check" style="display: block;">
+                    <div class="kc-lesson">${currentData.lesson}</div>
+                    <h4 class="kc-question">${currentData.question}</h4>
+                    <div class="options" id="options-box"></div>
+                    <div class="feedback" id="feedback-box"></div>
+                </div>
+            </div>
+        `;
+
+        const optionsBox = document.getElementById('options-box');
+        currentData.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt.text;
+            btn.onclick = () => verifySelection(index, currentData);
+            optionsBox.appendChild(btn);
+        });
+    }
+
+    function verifySelection(selectedIndex, currentData) {
+        const feedbackBox = document.getElementById('feedback-box');
+        const selectedOption = currentData.options[selectedIndex];
+
+        if (selectedOption.correct) {
+            feedbackBox.innerHTML = `<strong>CORRECT!</strong> ${currentData.correctFeedback}`;
+            feedbackBox.className = "feedback correct";
+        } else {
+            feedbackBox.innerHTML = `<strong>INCORRECT.</strong> ${currentData.incorrectFeedback}`;
+            feedbackBox.className = "feedback incorrect";
+        }
+    }
+
+    function resetActivity() {
+        const items = document.querySelectorAll('.packet-item');
+        items.forEach(item => item.classList.remove('selected'));
+
+        const detailsContainer = document.getElementById('details-content');
+        detailsContainer.innerHTML = `<div class="detail-placeholder">Select a packet from the capture stream (left) to begin deep inspection...</div>`;
+        activePacketId = null;
+    }
+</script>
+
+</body>
+</html>
+

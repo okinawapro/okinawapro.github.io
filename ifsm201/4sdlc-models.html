@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>💣 SDLC Bomb Defusal</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: black;
+    color: #00ffcc;
+    text-align: center;
+}
+
+/* TIMER */
+#timer {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    background: red;
+    color: white;
+    padding: 10px 16px;
+    font-size: 18px;
+    border-radius: 6px;
+    z-index: 9999;
+    max-width: calc(100vw - 30px);
+}
+
+/* GAME */
+#game {
+    border: 2px solid red;
+    padding: 20px;
+    width: 65%;
+    margin: 60px auto;
+}
+
+/* CARDS */
+.phase {
+    display: inline-block;
+    width: 140px;
+    padding: 12px;
+    margin: 8px;
+    background: linear-gradient(145deg, #111, #222);
+    border: 2px solid #00ffcc;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: grab;
+    transition: 0.3s;
+}
+
+/* GLOW */
+.correctGlow {
+    border-color: lime;
+    box-shadow: 0 0 15px lime;
+}
+.wrongGlow {
+    border-color: red;
+    box-shadow: 0 0 15px red;
+}
+
+/* DROP ZONE */
+#dropzone {
+    border: 2px dashed #00ffcc;
+    min-height: 120px;
+    padding: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* BUTTONS */
+button {
+    padding: 10px 15px;
+    margin: 8px;
+    background: #00ffcc;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+button:hover {
+    background: lime;
+}
+
+/* MODALS */
+.modalOverlay {
+    display: none;
+    position: fixed;
+    z-index: 10000;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.8);
+}
+
+.modalContent {
+    background:#111;
+    color:#00ffcc;
+    width:60%;
+    margin:8% auto;
+    padding:25px;
+    border:2px solid #00ffcc;
+    border-radius:10px;
+    text-align:left;
+}
+
+/* SUCCESS ANIMATION */
+#successBox {
+    transform: scale(0.1);
+    animation: grow 3s forwards;
+    text-align:center;
+}
+
+@keyframes grow {
+    from { transform: scale(0.1); }
+    to { transform: scale(1); }
+}
+
+/* SLIDER */
+.sliderContainer {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+}
+
+.sliderLabel {
+    width:140px;
+    font-size:14px;
+}
+
+input[type=range] {
+    width:300px;
+    accent-color:#00ffcc;
+}
+</style>
+</head>
+
+<body>
+
+<div id="timer">⏱ 120</div>
+
+<h1>💣 DEFUSE THE BOMB</h1>
+
+<div id="game">
+
+<h2>Arrange SDLC Phases (Waterfall Model)</h2>
+<div id="phases"></div>
+<div id="dropzone"></div>
+
+<h2 id="modelQuestion"></h2>
+<select id="modelSelect"></select>
+
+<h2 id="checkboxQuestion"></h2>
+<div id="checkboxArea"></div>
+
+<h2 id="sliderQuestion"></h2>
+<div class="sliderContainer">
+    <span class="sliderLabel">Stable / Predictable</span>
+
+    <input type="range" id="flex" min="0" max="100" step="10" list="marks">
+
+    <datalist id="marks">
+        <option value="0"></option>
+        <option value="50"></option>
+        <option value="100"></option>
+    </datalist>
+
+    <span class="sliderLabel">Constant Change</span>
+</div>
+
+<p id="flexValue"></p>
+
+<button onclick="checkAnswers()">Check</button>
+<button onclick="solveGame()">Solve</button>
+<button onclick="resetGame()">Reset</button>
+<button onclick="showLessons()">Lessons</button>
+
+<p id="result"></p>
+
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="successModal" class="modalOverlay">
+    <div class="modalContent" id="successBox">
+        <h1>✅ BOMB DEFUSED!</h1>
+        <button onclick="closeSuccess()">Close</button>
+    </div>
+</div>
+
+<!-- LESSONS MODAL -->
+<div id="lessonModal" class="modalOverlay">
+    <div class="modalContent">
+        <h2>📘 SDLC Models Summary</h2>
+
+        <p><b>Waterfall:</b> Linear sequence. No going backward easily.</p>
+        <p><b>Fountain:</b> Overlapping phases, iterative.</p>
+        <p><b>Build-and-Fix:</b> No plan—build first, fix later.</p>
+        <p><b>RAD:</b> Fast prototyping with user feedback.</p>
+        <p><b>Agile:</b> Iterative, flexible, continuous delivery.</p>
+
+        <button onclick="closeLessons()">Close</button>
+    </div>
+</div>
+
+<script>
+let correctOrder=["Requirements","Design","Development","Testing","Deployment"];
+let correctModel="";
+let correctChecks=[];
+let sliderMode="";
+let dragged=null;
+
+let t,time=120;
+
+/* DRAG */
+function initDrag(){
+    let pDiv=document.getElementById("phases");
+    let dz=document.getElementById("dropzone");
+
+    pDiv.innerHTML="";
+    dz.innerHTML="";
+
+    let shuffled=[...correctOrder].sort(()=>Math.random()-0.5);
+
+    shuffled.forEach(p=>{
+        let c=document.createElement("div");
+        c.className="phase";
+        c.innerText=p;
+        c.draggable=true;
+
+        c.ondragstart=()=>dragged=c;
+
+        pDiv.appendChild(c);
+    });
+
+    dz.ondragover=e=>e.preventDefault();
+
+    dz.ondrop=e=>{
+        e.preventDefault();
+        if(dragged) dz.appendChild(dragged);
+    };
+}
+
+/* QUESTIONS */
+function initQuestions(){
+
+    let modelQs=[
+        ["Which model is strictly linear?","Waterfall"],
+        ["Which allows backward movement?","Fountain"],
+        ["Which uses prototyping?","RAD"]
+    ];
+
+    let mq=modelQs[Math.floor(Math.random()*modelQs.length)];
+    correctModel=mq[1];
+    document.getElementById("modelQuestion").innerText=mq[0];
+
+    let models=["Waterfall","Fountain","Build-and-Fix","RAD","Agile"];
+    let sel=document.getElementById("modelSelect");
+    sel.innerHTML="";
+    models.forEach(m=>{
+        let o=document.createElement("option");
+        o.text=m;
+        sel.add(o);
+    });
+
+    let checkboxQs=[
+        ["Select ALL models with strong user feedback:",["Agile","RAD"]],
+        ["Select ALL iterative models:",["Agile","RAD"]]
+    ];
+
+    let cq=checkboxQs[Math.floor(Math.random()*checkboxQs.length)];
+    correctChecks=cq[1];
+    document.getElementById("checkboxQuestion").innerText=cq[0];
+
+    let opts=["Agile","RAD","Waterfall"];
+    let area=document.getElementById("checkboxArea");
+    area.innerHTML="";
+
+    opts.forEach(o=>{
+        let lbl=document.createElement("label");
+        lbl.innerHTML=`<input type="checkbox" value="${o}"> ${o}`;
+        area.appendChild(lbl);
+    });
+
+    let sliderQs=[
+        ["System constantly changing. Set the dial:","high"],
+        ["Stable predictable system. Set the dial:","low"]
+    ];
+
+    let sq=sliderQs[Math.floor(Math.random()*sliderQs.length)];
+    sliderMode=sq[1];
+    document.getElementById("sliderQuestion").innerText=sq[0];
+}
+
+/* SLIDER LABEL */
+document.addEventListener("input", ()=>{
+    let val=document.getElementById("flex").value;
+    let txt = val<40 ? "🧱 Rigid (Waterfall)"
+            : val<70 ? "⚖️ Balanced"
+            : "🚀 Flexible (Agile/RAD)";
+    document.getElementById("flexValue").innerText=txt;
+});
+
+/* CHECK */
+function checkAnswers(){
+
+    let result=[];
+
+    let cards=[...document.getElementById("dropzone").children];
+
+    cards.forEach((c,i)=>{
+        c.classList.remove("correctGlow","wrongGlow");
+
+        if(c.innerText===correctOrder[i]){
+            c.classList.add("correctGlow");
+        } else{
+            c.classList.add("wrongGlow");
+        }
+    });
+
+    let orderCorrect = cards.map(c=>c.innerText).join()==correctOrder.join();
+
+    result.push(orderCorrect?"✅ Sequence correct":"❌ Sequence wrong");
+
+    let modelCorrect = document.getElementById("modelSelect").value===correctModel;
+    result.push(modelCorrect?"✅ Model correct":"❌ Model wrong");
+
+    let selected=[...document.querySelectorAll("input[type=checkbox]:checked")].map(c=>c.value);
+    let checkCorrect = correctChecks.every(v=>selected.includes(v)) && selected.length===correctChecks.length;
+    result.push(checkCorrect?"✅ Checkbox correct":"❌ Checkbox wrong");
+
+    let flex=document.getElementById("flex").value;
+    let sliderCorrect = sliderMode=="high" ? flex>=70 : flex<=30;
+    result.push(sliderCorrect?"✅ Slider correct":"❌ Slider wrong");
+
+    document.getElementById("result").innerHTML=result.join("<br>");
+
+    if(result.every(r=>r.includes("✅"))) showSuccess();
+}
+
+/* SUCCESS */
+function showSuccess(){
+    clearInterval(t);
+    document.getElementById("timer").innerText="✅ SAFE";
+    document.getElementById("timer").style.background="green";
+    document.getElementById("successModal").style.display="block";
+}
+
+function closeSuccess(){
+    document.getElementById("successModal").style.display="none";
+}
+
+/* LESSONS */
+function showLessons(){
+    document.getElementById("lessonModal").style.display="block";
+}
+
+function closeLessons(){
+    document.getElementById("lessonModal").style.display="none";
+}
+
+/* TIMER */
+function startTimer(){
+    clearInterval(t);
+    time=120;
+
+    t=setInterval(()=>{
+        document.getElementById("timer").innerText="⏱ "+time;
+        time--;
+        if(time<=0){
+            clearInterval(t);
+            alert("💥 BOOM!");
+        }
+    },1000);
+}
+
+/* SOLVE */
+function solveGame(){
+    let dz=document.getElementById("dropzone");
+    dz.innerHTML="";
+    correctOrder.forEach(p=>{
+        let d=document.createElement("div");
+        d.className="phase correctGlow";
+        d.innerText=p;
+        dz.appendChild(d);
+    });
+
+    document.getElementById("modelSelect").value=correctModel;
+
+    document.querySelectorAll("input[type=checkbox]").forEach(cb=>{
+        cb.checked=correctChecks.includes(cb.value);
+    });
+
+    document.getElementById("flex").value=(sliderMode=="high")?90:10;
+}
+
+/* RESET */
+function resetGame(){
+    initGame();
+}
+
+/* INIT */
+function initGame(){
+    initDrag();
+    initQuestions();
+    startTimer();
+    document.getElementById("result").innerHTML="";
+    document.getElementById("successModal").style.display="none";
+}
+
+initGame();
+
+</script>
+
+</body>
+</html>
