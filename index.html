@@ -69,6 +69,30 @@
     text-align: center;
     font-weight: bold;
   }
+  details {
+    margin: 12px 0;
+  }
+
+  summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 10px 14px;
+    background: #f3f4f6;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  .dir-list a {
+    display: block;
+    padding: 8px 12px;
+    margin: 6px 0;
+    background: #e5e7eb;
+    color: #0f172a;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+
+  .dir-list a:hover { background: #d1d5db; }
 </style>
 </head>
 
@@ -77,9 +101,9 @@
 <h1>Rafael's Class Activities</h1>
 <p>These are activities from my IFSM201 class.  We do them in class but remain available online to use on your own time. </p>
 
-<div class="card">
+  <div class="card">
   <div id="status" class="loading">Loading pages…</div>
-  <ul id="list"></ul>
+  <div id="list"></div>
 </div>
 
   <div>
@@ -93,32 +117,69 @@ const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/`;
 const listEl = document.getElementById("list");
 const statusEl = document.getElementById("status");
 
+function makeLink(name, href) {
+  const a = document.createElement('a');
+  a.textContent = name.replace('.html','').replace(/[-_]/g,' ');
+  a.href = href;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  return a;
+}
+
 fetch(apiUrl)
   .then(res => res.json())
-  .then(files => {
-    const htmlFiles = files
-      .filter(f => f.type === "file")
-      .map(f => f.name)
-      .filter(name => name.endsWith(".html") && name !== "index.html")
-      .sort((a, b) => a.localeCompare(b));
+  .then(async items => {
+    statusEl.textContent = '';
 
-    if (htmlFiles.length === 0) {
-      statusEl.textContent = "No HTML pages found.";
-      return;
+    // Show files in root (if any)
+    const rootHtml = items.filter(i => i.type === 'file' && i.name.endsWith('.html') && i.name !== 'index.html');
+    if (rootHtml.length > 0) {
+      const details = document.createElement('details');
+      const summary = document.createElement('summary');
+      summary.textContent = 'Root';
+      details.appendChild(summary);
+      const ul = document.createElement('div');
+      ul.className = 'dir-list';
+      rootHtml.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f => {
+        ul.appendChild(makeLink(f.name, f.name));
+      });
+      details.appendChild(ul);
+      listEl.appendChild(details);
     }
 
-    statusEl.remove();
+    // For each directory, fetch contents and list HTML files
+    const dirs = items.filter(i => i.type === 'dir');
+    for (const d of dirs) {
+      try {
+        const res = await fetch(apiUrl + encodeURIComponent(d.name));
+        const contents = await res.json();
+        const htmlFiles = (contents || []).filter(c => c.type === 'file' && c.name.endsWith('.html'));
+        if (htmlFiles.length === 0) continue;
 
-    htmlFiles.forEach(file => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = file;   
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.textContent = file.replace(".html", "").replace(/[-_]/g, " ");
-      li.appendChild(a);
-      listEl.appendChild(li);
-    });
+        const details = document.createElement('details');
+        const summary = document.createElement('summary');
+        summary.textContent = d.name;
+        details.appendChild(summary);
+
+        const ul = document.createElement('div');
+        ul.className = 'dir-list';
+        htmlFiles.sort((a,b)=>a.name.localeCompare(b.name)).forEach(f => {
+          // link relative to site root
+          const href = `${d.name}/${f.name}`;
+          ul.appendChild(makeLink(f.name, href));
+        });
+        details.appendChild(ul);
+        listEl.appendChild(details);
+      } catch (err) {
+        console.error('Failed to load directory', d.name, err);
+      }
+    }
+
+    if (listEl.children.length === 0) {
+      statusEl.textContent = 'No HTML pages found.';
+    } else {
+      statusEl.remove();
+    }
   })
   .catch(err => {
     console.error(err);
