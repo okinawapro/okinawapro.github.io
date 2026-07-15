@@ -1,130 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RafaelT - Class Activities – HTML Index</title>
-
+<meta charset="UTF-8">
+<title>Repository File Browser</title>
 <style>
-  body {
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    background: linear-gradient(135deg, #de741c, #b23afc);
-    margin: 0;
-    padding: 24px;
-    color: #1f2937;
-  }
-
-  h1 {
-    text-align: center;
-    margin-bottom: 8px;
-  }
-
-  p {
-    text-align: center;
-    margin-bottom: 24px;
-  }
-
-  .card {
-    max-width: 720px;
-    margin: 0 auto;
-    background: #fff;
-    border-radius: 16px;
-    padding: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  }
-
-  ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  li {
-    margin: 10px 0;
-  }
-
-  a {
-    display: block;
-    padding: 12px 16px;
-    background: #2563eb;
-    color: white;
-    text-decoration: none;
-    border-radius: 12px;
-    font-weight: 600;
-    transition: transform 0.1s ease, background 0.2s ease;
-  }
-
-  a:hover {
-    background: #1d4ed8;
-    transform: translateY(-1px);
-  }
-
-  .loading {
-    text-align: center;
-    font-weight: bold;
-  }
-
-  .error {
-    color: #b91c1c;
-    text-align: center;
-    font-weight: bold;
-  }
-</style>
-</head>
-
-<body>
-
-<h1>Rafael's Class Activities</h1>
-<p>These are activities from my IFSM201 class.  We do them in class but remain available online to use on your own time. </p>
-
-<div class="card">
-  <div id="status" class="loading">Loading pages…</div>
-  <ul id="list"></ul>
-</div>
-
-  <div>
-    <p>All of these files were created by RafaelT using Generative AI (Ollama, Gemma4, OpenClaw, Cline, Gemini, ChatGPT, and or Copilot)</p>
-  </div>
-<script>
-const owner = "okinawapro";
-const repo = "okinawapro.github.io";
-const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/`;
-
-const listEl = document.getElementById("list");
-const statusEl = document.getElementById("status");
-
-fetch(apiUrl)
-  .then(res => res.json())
-  .then(files => {
-    const htmlFiles = files
-      .filter(f => f.type === "file")
-      .map(f => f.name)
-      .filter(name => name.endsWith(".html") && name !== "index.html")
-      .sort((a, b) => a.localeCompare(b));
-
-    if (htmlFiles.length === 0) {
-      statusEl.textContent = "No HTML pages found.";
-      return;
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+        background: #f5f5f5;
     }
 
-    statusEl.remove();
+    #searchBox {
+        width: 100%;
+        padding: 12px;
+        font-size: 18px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+    }
 
-    htmlFiles.forEach(file => {
-      const li = document.createElement("li");
-      const a = document.createElement("a");
-      a.href = file;   
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      a.textContent = file.replace(".html", "").replace(/[-_]/g, " ");
-      li.appendChild(a);
-      listEl.appendChild(li);
+    .section {
+        margin-bottom: 15px;
+        border-radius: 8px;
+        padding: 10px;
+        color: #fff;
+    }
+
+    .section h2 {
+        cursor: pointer;
+        margin: 0;
+        padding: 10px;
+        font-size: 20px;
+    }
+
+    .file-list {
+        display: none;
+        padding: 10px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 6px;
+        margin-top: 10px;
+    }
+
+    .file-item {
+        margin: 5px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .file-item img {
+        width: 20px;
+        height: 20px;
+    }
+
+    a {
+        color: #fff;
+        text-decoration: underline;
+    }
+</style>
+</head>
+<body>
+
+<h1>Repository File Browser</h1>
+
+<input id="searchBox" type="text" placeholder="Search directories or files...">
+
+<div id="container"></div>
+
+<script>
+const colors = [
+    "#4a90e2", "#50e3c2", "#9013fe", "#f5a623",
+    "#d0021b", "#7ed321", "#417505", "#b8e986"
+];
+
+const icons = {
+    "folder": "https://img.icons8.com/fluency/48/folder-invoices.png",
+    "html": "https://img.icons8.com/color/48/html-5.png",
+    "css": "https://img.icons8.com/color/48/css3.png",
+    "js": "https://img.icons8.com/color/48/javascript.png",
+    "png": "https://img.icons8.com/color/48/png.png",
+    "jpg": "https://img.icons8.com/color/48/jpg.png",
+    "jpeg": "https://img.icons8.com/color/48/jpg.png",
+    "gif": "https://img.icons8.com/color/48/gif.png",
+    "svg": "https://img.icons8.com/color/48/svg.png",
+    "md": "https://img.icons8.com/fluency/48/markdown.png",
+    "default": "https://img.icons8.com/fluency/48/document.png"
+};
+
+function getIcon(filename, isDir) {
+    if (isDir) return icons.folder;
+    const ext = filename.split(".").pop().toLowerCase();
+    return icons[ext] || icons.default;
+}
+
+async function fetchDirectory(path, container, depth = 0) {
+    const api = `https://api.github.com/repos/okinawapro/okinawapro.github.io/contents/${path}`;
+    const response = await fetch(api);
+    const items = await response.json();
+
+    const directories = items.filter(i => i.type === "dir");
+    const files = items.filter(i => i.type === "file");
+
+    let colorIndex = depth % colors.length;
+
+    const section = document.createElement("div");
+    section.className = "section";
+    section.style.background = colors[colorIndex];
+
+    const header = document.createElement("h2");
+    header.textContent = path || "root";
+
+    const fileList = document.createElement("div");
+    fileList.className = "file-list";
+
+    header.addEventListener("click", () => {
+        fileList.style.display = fileList.style.display === "none" ? "block" : "none";
     });
-  })
-  .catch(err => {
-    console.error(err);
-    statusEl.textContent = "Failed to load page list.";
-    statusEl.className = "error";
-  });
+
+    section.appendChild(header);
+    section.appendChild(fileList);
+    container.appendChild(section);
+
+    // Add files
+    files.forEach(file => {
+        const item = document.createElement("div");
+        item.className = "file-item";
+
+        const icon = document.createElement("img");
+        icon.src = getIcon(file.name, false);
+
+        const link = document.createElement("a");
+        link.href = file.html_url;
+        link.target = "_blank";
+        link.textContent = file.name;
+
+        item.appendChild(icon);
+        item.appendChild(link);
+        fileList.appendChild(item);
+    });
+
+    // Recursively add directories
+    for (const dir of directories) {
+        const item = document.createElement("div");
+        item.className = "file-item";
+
+        const icon = document.createElement("img");
+        icon.src = getIcon(dir.name, true);
+
+        const label = document.createElement("span");
+        label.textContent = dir.name;
+
+        item.appendChild(icon);
+        item.appendChild(label);
+        fileList.appendChild(item);
+
+        await fetchDirectory(dir.path, fileList, depth + 1);
+    }
+}
+
+async function init() {
+    const container = document.getElementById("container");
+    await fetchDirectory("", container);
+}
+
+document.getElementById("searchBox").addEventListener("input", function () {
+    const query = this.value.toLowerCase();
+    const sections = document.querySelectorAll(".section");
+
+    sections.forEach(section => {
+        const text = section.querySelector("h2").textContent.toLowerCase();
+        const files = section.querySelectorAll(".file-item");
+
+        let match = text.includes(query);
+
+        files.forEach(file => {
+            const fileText = file.textContent.toLowerCase();
+            if (fileText.includes(query)) match = true;
+        });
+
+        section.style.display = match ? "block" : "none";
+    });
+});
+
+init();
 </script>
 
 </body>
