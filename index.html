@@ -93,45 +93,24 @@ function getIcon(filename, isDir) {
     return icons[ext] || icons.default;
 }
 
-async function fetchDirectory(path, container, depth = 0) {
+function showSpinner(show) {
+    document.getElementById("spinner").style.display = show ? "block" : "none";
+}
+
+async function fetchContents(path = "") {
     const api = `https://api.github.com/repos/okinawapro/okinawapro.github.io/contents/${path}?ref=master`;
     const response = await fetch(api);
-    const items = await response.json();
+    return await response.json();
+}
 
-    // Filter directories and files
-    const directories = items.filter(i => i.type === "dir");
+async function loadDirectory(section, dirPath, fileList) {
+    if (fileList.dataset.loaded === "true") return;
+
+    showSpinner(true);
+
+    const items = await fetchContents(dirPath);
     const files = items.filter(i => i.type === "file");
-
-    // Do NOT show the root section
-    const isRoot = path === "" || path === undefined;
-
-    let colorIndex = depth % colors.length;
-
-    // Only create a section if NOT root
-    let section, header, fileList;
-
-    if (!isRoot) {
-        section = document.createElement("div");
-        section.className = "section";
-        section.style.background = colors[colorIndex];
-
-        header = document.createElement("h2");
-        header.textContent = path;
-
-        fileList = document.createElement("div");
-        fileList.className = "file-list";
-
-        header.addEventListener("click", () => {
-            fileList.style.display = fileList.style.display === "none" ? "block" : "none";
-        });
-
-        section.appendChild(header);
-        section.appendChild(fileList);
-        container.appendChild(section);
-    } else {
-        // Root container
-        fileList = container;
-    }
+    const directories = items.filter(i => i.type === "dir");
 
     // Add files
     files.forEach(file => {
@@ -151,8 +130,8 @@ async function fetchDirectory(path, container, depth = 0) {
         fileList.appendChild(item);
     });
 
-    // Recursively add directories
-    for (const dir of directories) {
+    // Add subdirectories
+    directories.forEach(dir => {
         const item = document.createElement("div");
         item.className = "file-item";
 
@@ -166,37 +145,68 @@ async function fetchDirectory(path, container, depth = 0) {
         item.appendChild(label);
         fileList.appendChild(item);
 
-        // IMPORTANT: pass the correct directory path
-        await fetchDirectory(dir.path, fileList, depth + 1);
-    }
+        // Create collapsible subdirectory
+        const subSection = document.createElement("div");
+        subSection.className = "section";
+        subSection.style.background = "#333";
+        subSection.style.marginLeft = "20px";
+
+        const subHeader = document.createElement("h2");
+        subHeader.textContent = dir.path;
+
+        const subList = document.createElement("div");
+        subList.className = "file-list";
+        subList.style.display = "none";
+        subList.dataset.loaded = "false";
+
+        subHeader.addEventListener("click", async () => {
+            subList.style.display = subList.style.display === "none" ? "block" : "none";
+            await loadDirectory(subSection, dir.path, subList);
+        });
+
+        subSection.appendChild(subHeader);
+        subSection.appendChild(subList);
+        fileList.appendChild(subSection);
+    });
+
+    fileList.dataset.loaded = "true";
+    showSpinner(false);
 }
 
 async function init() {
     const container = document.getElementById("container");
-    await fetchDirectory("", container);
-}
+    const rootItems = await fetchContents("");
 
+    const directories = rootItems.filter(i => i.type === "dir");
 
-document.getElementById("searchBox").addEventListener("input", function () {
-    const query = this.value.toLowerCase();
-    const sections = document.querySelectorAll(".section");
+    let colorIndex = 0;
 
-    sections.forEach(section => {
-        const text = section.querySelector("h2").textContent.toLowerCase();
-        const files = section.querySelectorAll(".file-item");
+    directories.forEach(dir => {
+        const section = document.createElement("div");
+        section.className = "section";
+        section.style.background = colors[colorIndex++ % colors.length];
 
-        let match = text.includes(query);
+        const header = document.createElement("h2");
+        header.textContent = dir.name;
 
-        files.forEach(file => {
-            const fileText = file.textContent.toLowerCase();
-            if (fileText.includes(query)) match = true;
+        const fileList = document.createElement("div");
+        fileList.className = "file-list";
+        fileList.style.display = "none";
+        fileList.dataset.loaded = "false";
+
+        header.addEventListener("click", async () => {
+            fileList.style.display = fileList.style.display === "none" ? "block" : "none";
+            await loadDirectory(section, dir.path, fileList);
         });
 
-        section.style.display = match ? "block" : "none";
+        section.appendChild(header);
+        section.appendChild(fileList);
+        container.appendChild(section);
     });
-});
+}
 
 init();
+
 </script>
 
 </body>
