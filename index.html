@@ -64,6 +64,11 @@
 <h1>Rafael's UMGC classes</h1>
 <div id="container"></div>
 
+<div id="spinner" style="display:none; text-align:center; margin-top:20px;">
+    <img src="https://i.gifer.com/ZZ5H.gif" width="60">
+</div>
+    
+
 <script>
 const colors = [
     "#4a90e2", "#50e3c2", "#9013fe", "#f5a623",
@@ -202,7 +207,9 @@ async function init() {
     });
 }
 
-init();
+document.addEventListener("DOMContentLoaded", () => {
+    init();
+});
 
 </script>
 
