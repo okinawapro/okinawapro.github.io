@@ -94,32 +94,44 @@ function getIcon(filename, isDir) {
 }
 
 async function fetchDirectory(path, container, depth = 0) {
-    const api = `https://api.github.com/repos/okinawapro/okinawapro.github.io/contents?ref=master`;
+    const api = `https://api.github.com/repos/okinawapro/okinawapro.github.io/contents/${path}?ref=master`;
     const response = await fetch(api);
     const items = await response.json();
 
+    // Filter directories and files
     const directories = items.filter(i => i.type === "dir");
     const files = items.filter(i => i.type === "file");
 
+    // Do NOT show the root section
+    const isRoot = path === "" || path === undefined;
+
     let colorIndex = depth % colors.length;
 
-    const section = document.createElement("div");
-    section.className = "section";
-    section.style.background = colors[colorIndex];
+    // Only create a section if NOT root
+    let section, header, fileList;
 
-    const header = document.createElement("h2");
-    header.textContent = path || "root";
+    if (!isRoot) {
+        section = document.createElement("div");
+        section.className = "section";
+        section.style.background = colors[colorIndex];
 
-    const fileList = document.createElement("div");
-    fileList.className = "file-list";
+        header = document.createElement("h2");
+        header.textContent = path;
 
-    header.addEventListener("click", () => {
-        fileList.style.display = fileList.style.display === "none" ? "block" : "none";
-    });
+        fileList = document.createElement("div");
+        fileList.className = "file-list";
 
-    section.appendChild(header);
-    section.appendChild(fileList);
-    container.appendChild(section);
+        header.addEventListener("click", () => {
+            fileList.style.display = fileList.style.display === "none" ? "block" : "none";
+        });
+
+        section.appendChild(header);
+        section.appendChild(fileList);
+        container.appendChild(section);
+    } else {
+        // Root container
+        fileList = container;
+    }
 
     // Add files
     files.forEach(file => {
@@ -154,6 +166,7 @@ async function fetchDirectory(path, container, depth = 0) {
         item.appendChild(label);
         fileList.appendChild(item);
 
+        // IMPORTANT: pass the correct directory path
         await fetchDirectory(dir.path, fileList, depth + 1);
     }
 }
@@ -162,6 +175,7 @@ async function init() {
     const container = document.getElementById("container");
     await fetchDirectory("", container);
 }
+
 
 document.getElementById("searchBox").addEventListener("input", function () {
     const query = this.value.toLowerCase();
