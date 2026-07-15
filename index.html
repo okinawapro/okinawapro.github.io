@@ -94,7 +94,7 @@ function getIcon(filename, isDir) {
 }
 
 async function fetchDirectory(path, container, depth = 0) {
-    const api = `https://api.github.com/repos/okinawapro/okinawapro.github.io/contents/?ref=master`;
+    const api = `https://api.github.com/repos/okinawapro/okinawapro.github.io/contents`;
     const response = await fetch(api);
     const items = await response.json();
 
